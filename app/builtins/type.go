@@ -17,7 +17,7 @@ func typeCommand(args []string) error {
 		} else {
 			command_path, err := exec.LookPath(command_name)
 			if err == nil {
-				fmt.Printf("%s is a %s\n", command_name, command_path)
+				fmt.Printf("%s is %s\n", command_name, command_path)
 			} else {
 				fmt.Printf("%s: not found\n", command_name)
 			}
