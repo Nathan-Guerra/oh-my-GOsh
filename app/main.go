@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/app/builtins"
@@ -29,8 +30,19 @@ func main() {
 		command, exists := builtins.Builtins[params[0]]
 
 		if !exists {
-			fmt.Printf("%s: command not found\n", params[0])
-			continue
+			command_path, err := exec.LookPath(params[0])
+			if err == nil {
+				cmd := exec.Command(command_path, args...)
+				err = cmd.Run()
+				if err != nil {
+					fmt.Println(err)
+				}
+				continue
+			} else {
+				fmt.Printf("%s: command not found\n", params[0])
+				continue
+			}
+
 		}
 
 		err := command(args)
