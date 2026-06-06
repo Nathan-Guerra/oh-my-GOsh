@@ -32,7 +32,9 @@ func main() {
 		if !exists {
 			command_path, err := exec.LookPath(params[0])
 			if err == nil {
-				cmd := exec.Command(command_path, args...)
+				parts := strings.Split(command_path, string(os.PathSeparator))
+				command_name := parts[len(parts)-1]
+				cmd := exec.Command(command_name, args...)
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
