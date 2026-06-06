@@ -1,6 +1,7 @@
 package builtins
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -10,7 +11,7 @@ func pwd(args []string) error {
 		return err
 	}
 
-	println(wd)
+	fmt.Println(wd)
 
 	return nil
 }
