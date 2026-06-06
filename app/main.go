@@ -29,30 +29,20 @@ func main() {
 		args := params[1:]
 		command, exists := builtins.Builtins[params[0]]
 
-		if !exists {
-			command_path, err := exec.LookPath(params[0])
-			if err == nil {
-				parts := strings.Split(command_path, string(os.PathSeparator))
-				command_name := parts[len(parts)-1]
-				cmd := exec.Command(command_name, args...)
-				cmd.Stdin = os.Stdin
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				err = cmd.Run()
-				if err != nil {
-					fmt.Println(err)
-				}
-				continue
-			} else {
-				fmt.Printf("%s: command not found\n", params[0])
-				continue
+		if exists {
+			err := command(args)
+			if err != nil {
+				fmt.Println(err)
 			}
+		} else if _, err := exec.LookPath(params[0]); err == nil {
+			cmd := exec.Command(params[0], args...)
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
 
-		}
-
-		err := command(args)
-		if err != nil {
-			fmt.Println(err)
+			cmd.Run()
+		} else {
+			fmt.Printf("%s: command not found\n", params[0])
 		}
 	}
 }
