@@ -22,7 +22,6 @@ func cd(args []string) error {
 		return err
 	}
 
-	fmt.Printf("'%s'\n", args[0])
 	if args[0] == "-" {
 		args[0] = os.Getenv("OLDPWD")
 	} else if strings.HasPrefix(args[0], "~") {
