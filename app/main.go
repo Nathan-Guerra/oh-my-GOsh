@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
-
-	"github.com/codecrafters-io/shell-starter-go/app/builtins"
 )
 
 func main() {
@@ -25,24 +22,65 @@ func main() {
 			continue
 		}
 
-		params := strings.Split(input, " ")
-		args := params[1:]
-		command, exists := builtins.Builtins[params[0]]
+		var command_name string
+		var args []string
+		var found_command bool
 
-		if exists {
-			err := command(args)
-			if err != nil {
-				fmt.Println(err)
+		i := 0
+		for {
+			if !found_command {
+				for i < len(input) {
+					if input[i] == ' ' {
+						found_command = true
+						break
+					}
+
+					command_name += string(input[i])
+					i++
+				}
+			} else {
+				var arg string
+				for i < len(input) {
+					if input[i] == ' ' {
+						i++
+						break
+					}
+
+					arg += string(input[i])
+					i++
+				}
+
+				if len(arg) > 0 {
+					args = append(args, arg)
+				}
 			}
-		} else if _, err := exec.LookPath(params[0]); err == nil {
-			cmd := exec.Command(params[0], args...)
-			cmd.Stdin = os.Stdin
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
 
-			cmd.Run()
-		} else {
-			fmt.Printf("%s: command not found\n", params[0])
+			if i == len(input) {
+				break
+			}
 		}
+
+		fmt.Println(command_name)
+		fmt.Printf("%v\n", args)
+
+		// params := strings.Split(input, " ")
+		// // args := params[1:]
+		// command, exists := builtins.Builtins[params[0]]
+
+		// if exists {
+		// 	err := command(args)
+		// 	if err != nil {
+		// 		fmt.Println(err)
+		// 	}
+		// } else if _, err := exec.LookPath(params[0]); err == nil {
+		// 	cmd := exec.Command(params[0], args...)
+		// 	cmd.Stdin = os.Stdin
+		// 	cmd.Stdout = os.Stdout
+		// 	cmd.Stderr = os.Stderr
+
+		// 	cmd.Run()
+		// } else {
+		// 	fmt.Printf("%s: command not found\n", params[0])
+		// }
 	}
 }
