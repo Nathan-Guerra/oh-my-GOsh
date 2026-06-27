@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -109,8 +110,20 @@ func main() {
 						}
 					case D_QUOTE_RUNE:
 						i++
+						escapable_runes := []rune{D_QUOTE_RUNE, DOLLAR_SIGN_RUNE, BACKSLASH_RUNE}
 						for i < len(input) {
 							if input[i] == D_QUOTE_RUNE {
+								i++
+								break
+							}
+
+							if input[i] == BACKSLASH_RUNE {
+								i++
+								if slices.Contains(escapable_runes[:], rune(input[i])) {
+									arg += string(input[i])
+								} else {
+									arg += string(BACKSLASH_RUNE) + string(input[i])
+								}
 								i++
 								break
 							}
