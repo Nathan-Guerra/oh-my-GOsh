@@ -46,135 +46,126 @@ func main() {
 
 		i := 0
 		for {
-			if !found_command {
-				for i < len(input) {
-					if input[i] == SPACE_RUNE {
-						found_command = true
+			var arg string
+		loop:
+			for i < len(input) {
+				switch input[i] {
+				case BACKSLASH_RUNE:
+					i++
+					arg += string(input[i])
+					i++
+					break
+				case DOLLAR_SIGN_RUNE:
+					i++
+					if i >= len(input) || input[i] == SPACE_RUNE {
+						// ...$ <- at the end
+						arg += string(DOLLAR_SIGN_RUNE)
 						break
 					}
-					command_name += string(input[i])
-					i++
-				}
-			} else {
-				var arg string
-			loop:
-				for i < len(input) {
-					switch input[i] {
-					case BACKSLASH_RUNE:
-						i++
-						arg += string(input[i])
+
+					if input[i] == DOLLAR_SIGN_RUNE {
+						// $$ <- pid
+						arg += strconv.Itoa(os.Getpid())
 						i++
 						break
-					case DOLLAR_SIGN_RUNE:
-						i++
-						if i >= len(input) || input[i] == SPACE_RUNE {
-							// ...$ <- at the end
-							arg += string(DOLLAR_SIGN_RUNE)
+					}
+
+					var env_var string
+					for i < len(input) {
+						s := string(input[i])
+						if regexpLetters.MatchString(s) {
+							env_var += s
+							i++
+						} else {
 							break
+						}
+					}
+
+					v := os.Getenv(env_var)
+					if len(v) > 0 {
+						arg += v
+					}
+				case SPACE_RUNE:
+					i++
+					break loop
+				case S_QUOTE_RUNE:
+					i++
+					for i < len(input) {
+						if input[i] == S_QUOTE_RUNE {
+							i++
+							break
+						}
+						arg += string(input[i])
+						i++
+					}
+				case D_QUOTE_RUNE:
+					i++
+					escapable_runes := []rune{D_QUOTE_RUNE, DOLLAR_SIGN_RUNE, BACKSLASH_RUNE}
+					for i < len(input) {
+						if input[i] == D_QUOTE_RUNE {
+							i++
+							break
+						}
+
+						if input[i] == BACKSLASH_RUNE {
+							i++
+							if slices.Contains(escapable_runes[:], rune(input[i])) {
+								arg += string(input[i])
+							} else {
+								arg += string(BACKSLASH_RUNE) + string(input[i])
+							}
+							i++
+							continue
 						}
 
 						if input[i] == DOLLAR_SIGN_RUNE {
-							// $$ <- pid
-							arg += strconv.Itoa(os.Getpid())
 							i++
-							break
-						}
-
-						var env_var string
-						for i < len(input) {
-							s := string(input[i])
-							if regexpLetters.MatchString(s) {
-								env_var += s
-								i++
-							} else {
-								break
-							}
-						}
-
-						v := os.Getenv(env_var)
-						if len(v) > 0 {
-							arg += v
-						}
-					case SPACE_RUNE:
-						i++
-						break loop
-					case S_QUOTE_RUNE:
-						i++
-						for i < len(input) {
-							if input[i] == S_QUOTE_RUNE {
-								i++
-								break
-							}
-							arg += string(input[i])
-							i++
-						}
-					case D_QUOTE_RUNE:
-						i++
-						escapable_runes := []rune{D_QUOTE_RUNE, DOLLAR_SIGN_RUNE, BACKSLASH_RUNE}
-						for i < len(input) {
-							if input[i] == D_QUOTE_RUNE {
-								i++
-								break
-							}
-
-							if input[i] == BACKSLASH_RUNE {
-								i++
-								if slices.Contains(escapable_runes[:], rune(input[i])) {
-									arg += string(input[i])
-								} else {
-									arg += string(BACKSLASH_RUNE) + string(input[i])
-								}
-								i++
+							if input[i] == D_QUOTE_RUNE || input[i] == SPACE_RUNE {
+								// ...$ <- at the end of string or word
+								arg += string(DOLLAR_SIGN_RUNE)
+								// do not increment to let outer loop handle the rune
 								continue
 							}
 
 							if input[i] == DOLLAR_SIGN_RUNE {
+								// $$ <- pid
+								arg += strconv.Itoa(os.Getpid())
 								i++
-								if input[i] == D_QUOTE_RUNE || input[i] == SPACE_RUNE {
-									// ...$ <- at the end of string or word
-									arg += string(DOLLAR_SIGN_RUNE)
-									// do not increment to let outer loop handle the rune
-									continue
-								}
-
-								if input[i] == DOLLAR_SIGN_RUNE {
-									// $$ <- pid
-									arg += strconv.Itoa(os.Getpid())
-									i++
-									continue
-								}
-
-								var env_var string
-								for i < len(input) {
-									s := string(input[i])
-									if regexpLetters.MatchString(s) {
-										env_var += s
-										i++
-									} else {
-										break
-									}
-								}
-
-								v := os.Getenv(env_var)
-								if len(v) > 0 {
-									arg += v
-								}
-							} else {
-								arg += string(input[i])
-								i++
+								continue
 							}
-						}
 
-					default:
-						arg += string(input[i])
-						i++
+							var env_var string
+							for i < len(input) {
+								s := string(input[i])
+								if regexpLetters.MatchString(s) {
+									env_var += s
+									i++
+								} else {
+									break
+								}
+							}
+
+							v := os.Getenv(env_var)
+							if len(v) > 0 {
+								arg += v
+							}
+						} else {
+							arg += string(input[i])
+							i++
+						}
 					}
 
+				default:
+					arg += string(input[i])
+					i++
 				}
+			}
 
-				if len(arg) > 0 {
-					args = append(args, arg)
-				}
+			if !found_command {
+				found_command = true
+				command_name = arg
+			} else if len(arg) > 0 {
+				args = append(args, arg)
 			}
 
 			if i == len(input) {
