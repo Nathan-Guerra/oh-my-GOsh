@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/app/builtins"
@@ -12,11 +14,17 @@ import (
 
 func main() {
 	const (
-		SPACE_CHAR   = ' '
-		S_QUOTE_CHAR = '\''
+		SPACE_RUNE       = ' '
+		S_QUOTE_RUNE     = '\''
+		D_QUOTE_RUNE     = '"'
+		DOLLAR_SIGN_RUNE = '$'
 	)
 
 	scanner := bufio.NewScanner(os.Stdin)
+	regexpLetters, err := regexp.Compile("[a-zA-Z]")
+	if err != nil {
+		fmt.Println(err)
+	}
 	for {
 		fmt.Print("$ ")
 		scanner.Scan()
@@ -38,11 +46,10 @@ func main() {
 		for {
 			if !found_command {
 				for i < len(input) {
-					if input[i] == SPACE_CHAR {
+					if input[i] == SPACE_RUNE {
 						found_command = true
 						break
 					}
-
 					command_name += string(input[i])
 					i++
 				}
@@ -51,18 +58,92 @@ func main() {
 			loop:
 				for i < len(input) {
 					switch input[i] {
-					case SPACE_CHAR:
+					case DOLLAR_SIGN_RUNE:
+						i++
+						if i >= len(input) || input[i] == SPACE_RUNE {
+							// ...$ <- at the end
+							arg += string(DOLLAR_SIGN_RUNE)
+							break
+						}
+
+						if input[i] == DOLLAR_SIGN_RUNE {
+							// $$ <- pid
+							arg += strconv.Itoa(os.Getpid())
+							i++
+							break
+						}
+
+						var env_var string
+						for i < len(input) {
+							s := string(input[i])
+							if regexpLetters.MatchString(s) {
+								env_var += s
+								i++
+							} else {
+								break
+							}
+						}
+
+						v := os.Getenv(env_var)
+						if len(v) > 0 {
+							arg += v
+						}
+					case SPACE_RUNE:
 						i++
 						break loop
-					case S_QUOTE_CHAR:
+					case S_QUOTE_RUNE:
 						i++
 						for i < len(input) {
-							if input[i] == S_QUOTE_CHAR {
+							if input[i] == S_QUOTE_RUNE {
 								i++
 								break
 							}
 							arg += string(input[i])
 							i++
+						}
+					case D_QUOTE_RUNE:
+						i++
+						for i < len(input) {
+							if input[i] == D_QUOTE_RUNE {
+								i++
+								break
+							}
+
+							if input[i] == DOLLAR_SIGN_RUNE {
+								i++
+								if input[i] == D_QUOTE_RUNE || input[i] == SPACE_RUNE {
+									// ...$ <- at the end of string or word
+									arg += string(DOLLAR_SIGN_RUNE)
+									// do not increment to let outer loop handle the rune
+									continue
+								}
+
+								if input[i] == DOLLAR_SIGN_RUNE {
+									// $$ <- pid
+									arg += strconv.Itoa(os.Getpid())
+									i++
+									continue
+								}
+
+								var env_var string
+								for i < len(input) {
+									s := string(input[i])
+									if regexpLetters.MatchString(s) {
+										env_var += s
+										i++
+									} else {
+										break
+									}
+								}
+
+								v := os.Getenv(env_var)
+								if len(v) > 0 {
+									arg += v
+								}
+							} else {
+								arg += string(input[i])
+								i++
+							}
 						}
 
 					default:
