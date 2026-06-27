@@ -18,7 +18,7 @@ func main() {
 		S_QUOTE_RUNE     = '\''
 		D_QUOTE_RUNE     = '"'
 		DOLLAR_SIGN_RUNE = '$'
-		BACKLASH_RUNE    = '\\'
+		BACKSLASH_RUNE   = '\\'
 	)
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -59,7 +59,7 @@ func main() {
 			loop:
 				for i < len(input) {
 					switch input[i] {
-					case BACKLASH_RUNE:
+					case BACKSLASH_RUNE:
 						i++
 						arg += string(input[i])
 						i++
