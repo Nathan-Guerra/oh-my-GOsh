@@ -125,7 +125,7 @@ func main() {
 									arg += string(BACKSLASH_RUNE) + string(input[i])
 								}
 								i++
-								break
+								continue
 							}
 
 							if input[i] == DOLLAR_SIGN_RUNE {
