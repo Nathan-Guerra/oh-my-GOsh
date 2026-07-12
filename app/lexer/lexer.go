@@ -2,6 +2,10 @@ package lexer
 
 type TokenKind int
 
+func (k TokenKind) String() string {
+	return get_token_kind(k)
+}
+
 type Token struct {
 	Kind  TokenKind
 	Value string
@@ -25,7 +29,6 @@ func Tokenize(input string) []Token {
 	for i < len(input) {
 		var lookup byte
 		var has_lookup bool
-
 		if i+1 < len(input) {
 			lookup = input[i+1]
 			has_lookup = true
@@ -38,29 +41,29 @@ func Tokenize(input string) []Token {
 	return tokens
 }
 
-func which_kind[char rune | byte](r char, lookup char, has_lookup bool) TokenKind {
-	switch r {
-	case ' ':
+func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {
+	switch {
+	case r == ' ':
 		return WHITE_SPACE
-	case '\\':
+	case r == '\\':
 		return ESCAPE
-	case '$':
+	case r == '$':
 		return EXPAND
-	case '\'':
+	case r == '\'':
 		return STRING_LITERAL
-	case '"':
+	case r == '"':
 		return STRING_EXPAND
-	case '1':
+	case r == '>':
+		return REDIRECT_OUT
+	case is_numeric(r):
 		if has_lookup && lookup == '>' {
-			return REDIRECT_OUT
+			if r == '1' {
+				return REDIRECT_OUT
+			} else if r == '2' {
+				return REDIRECT_ERR
+			}
 		}
 		return NUMBER
-	case '2':
-		if has_lookup && lookup == '>' {
-			return REDIRECT_ERR
-		}
-		return NUMBER
-
 	default:
 		return LITERAL
 	}
@@ -70,25 +73,23 @@ func get_value_from(k TokenKind, i *int, input string) string {
 	start := *i
 	switch k {
 	case WHITE_SPACE:
-		for input[*i] == ' ' {
+		for (*i) < len(input) && input[*i] == ' ' {
 			(*i)++
 		}
 	case LITERAL:
-		char := input[*i]
-		for ('a' >= char && char <= 'z') || ('A' >= char && char <= 'Z') || (char >= '0' && char <= '9') {
+		for (*i) < len(input) && is_alphanum(input[*i]) {
 			(*i)++
 		}
 	case NUMBER:
-		char := input[*i]
-		for char >= '0' && char <= '9' {
+		for (*i) < len(input) && is_numeric(input[*i]) {
 			(*i)++
 		}
 	case STRING_LITERAL:
-		for input[*i] != '\'' {
+		for (*i) < len(input) && input[*i] != '\'' {
 			(*i)++
 		}
 	case STRING_EXPAND:
-		for input[*i] != '"' {
+		for (*i) < len(input) && input[*i] != '"' {
 			(*i)++
 		}
 	case EXPAND:
@@ -96,7 +97,7 @@ func get_value_from(k TokenKind, i *int, input string) string {
 		if char == '$' {
 			(*i)++
 		} else {
-			for 'A' >= char && char <= 'Z' {
+			for (*i) < len(input) && input[*i] >= 'A' && input[*i] <= 'Z' {
 				(*i)++
 			}
 		}
@@ -113,7 +114,7 @@ func get_value_from(k TokenKind, i *int, input string) string {
 		(*i) += 2
 	}
 
-	return input[start:*i]
+	return input[start:min(*i, len(input)-1)]
 }
 
 func is_alphabetic(c byte) bool {
@@ -126,4 +127,29 @@ func is_numeric(c byte) bool {
 
 func is_alphanum(c byte) bool {
 	return is_alphabetic(c) || is_numeric(c)
+}
+
+func get_token_kind(k TokenKind) string {
+	switch k {
+	case WHITE_SPACE:
+		return "WHITE_SPACE"
+	case ESCAPE:
+		return "ESCAPE"
+	case EXPAND:
+		return "EXPAND"
+	case STRING_LITERAL:
+		return "STRING_LITERAL"
+	case STRING_EXPAND:
+		return "STRING_EXPAND"
+	case REDIRECT_OUT:
+		return "REDIRECT_OUT"
+	case REDIRECT_ERR:
+		return "REDIRECT_ERR"
+	case NUMBER:
+		return "NUMBER"
+	case LITERAL:
+		return "LITERAL"
+	default:
+		panic("Unknown token kind")
+	}
 }
