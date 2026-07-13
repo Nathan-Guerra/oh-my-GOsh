@@ -45,8 +45,8 @@ func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {
 	switch {
 	case r == ' ':
 		return WHITE_SPACE
-	// case r == '\\':
-	// 	return ESCAPE
+	case r == '\\':
+		return ESCAPE
 	// case r == '$':
 	// 	return EXPAND
 	// case r == '\'':
@@ -78,32 +78,35 @@ func get_value_from(k TokenKind, i *int, input string) string {
 			(*i)++
 		}
 	case LITERAL:
-		for (*i) < len(input) && input[*i] != ' ' /*&& is_alphanum(input[*i])*/ {
+		for (*i) < len(input) &&
+			input[*i] != ' ' &&
+			input[*i] != '\\' {
 			(*i)++
 		}
-		// case NUMBER:
-		// 	for (*i) < len(input) && is_numeric(input[*i]) {
-		// 		(*i)++
-		// 	}
-		// case STRING_LITERAL:
-		// 	for (*i) < len(input) && input[*i] != '\'' {
-		// 		(*i)++
-		// 	}
-		// case STRING_EXPAND:
-		// 	for (*i) < len(input) && input[*i] != '"' {
-		// 		(*i)++
-		// 	}
-		// case EXPAND:
-		// 	char := input[*i]
-		// 	if char == '$' {
-		// 		(*i)++
-		// 	} else {
-		// 		for (*i) < len(input) && input[*i] >= 'A' && input[*i] <= 'Z' {
-		// 			(*i)++
-		// 		}
-		// 	}
-		// case ESCAPE:
-		// 	(*i)++
+	// case NUMBER:
+	// 	for (*i) < len(input) && is_numeric(input[*i]) {
+	// 		(*i)++
+	// 	}
+	// case STRING_LITERAL:
+	// 	for (*i) < len(input) && input[*i] != '\'' {
+	// 		(*i)++
+	// 	}
+	// case STRING_EXPAND:
+	// 	for (*i) < len(input) && input[*i] != '"' {
+	// 		(*i)++
+	// 	}
+	// case EXPAND:
+	// 	char := input[*i]
+	// 	if char == '$' {
+	// 		(*i)++
+	// 	} else {
+	// 		for (*i) < len(input) && input[*i] >= 'A' && input[*i] <= 'Z' {
+	// 			(*i)++
+	// 		}
+	// 	}
+	case ESCAPE:
+		start += 1
+		(*i) += 2
 		// case REDIRECT_OUT:
 		// 	char := input[*i]
 		// 	if char == '1' {

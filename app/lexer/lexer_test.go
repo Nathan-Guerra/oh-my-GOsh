@@ -22,7 +22,7 @@ func TestCanCreateLiteralToken(t *testing.T) {
 }
 
 func TestCanCreateMultipleTokens(t *testing.T) {
-	result := Tokenize("echo foo   bar ")
+	result := Tokenize("echo foo!   bar ")
 	t.Logf("Output: %v", result)
 
 	assert_length_is(6, result, t)
@@ -36,7 +36,7 @@ func TestCanCreateMultipleTokens(t *testing.T) {
 }
 
 func TestCanCreateEscapeToken(t *testing.T) {
-	result := Tokenize("\a")
+	result := Tokenize("\\a")
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], ESCAPE, t)
@@ -47,7 +47,7 @@ func TestCanCreateEscapeToken(t *testing.T) {
 }
 
 func TestCanCreateEscapeTokenInsideWord(t *testing.T) {
-	result := Tokenize("b\ac")
+	result := Tokenize("b\\ac")
 	t.Logf("Output: %v", result)
 	assert_token_kind_is(result[1], ESCAPE, t)
 
