@@ -8,6 +8,7 @@ func TestCanCreateWhitespaceToken(t *testing.T) {
 
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], WHITE_SPACE, t)
+	assert_token_value_is(result[0], " ", t)
 }
 
 func TestCanCreateLiteralToken(t *testing.T) {
@@ -15,10 +16,7 @@ func TestCanCreateLiteralToken(t *testing.T) {
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], LITERAL, t)
-
-	if result[0].Value != "echo" {
-		t.Errorf("Escaped string should be 'echo', '%s' received.", result[0].Value)
-	}
+	assert_token_value_is(result[0], "echo", t)
 }
 
 func TestCanCreateMultipleTokens(t *testing.T) {
@@ -40,26 +38,46 @@ func TestCanCreateEscapeToken(t *testing.T) {
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], ESCAPE, t)
-
-	if result[0].Value != "a" {
-		t.Errorf("Escaped string should be 'a', '%s' received.", result[0].Value)
-	}
+	assert_token_value_is(result[0], "a", t)
 }
 
 func TestCanCreateEscapeTokenInsideWord(t *testing.T) {
 	result := Tokenize("b\\ac")
 	t.Logf("Output: %v", result)
 	assert_token_kind_is(result[1], ESCAPE, t)
-
-	if result[1].Value != "a" {
-		t.Errorf("Escaped string should be 'a', '%s' received.", result[0].Value)
-	}
+	assert_token_value_is(result[1], "a", t)
 }
 
 func TestCanCreateExpandToken(t *testing.T) {
 	resultA := Tokenize("$USER")
 	assert_length_is(1, resultA, t)
 	assert_token_kind_is(resultA[0], EXPAND, t)
+	assert_token_value_is(resultA[0], "USER", t)
+
+	resultB := Tokenize("$USERtest")
+	assert_length_is(2, resultB, t)
+	assert_token_kind_is(resultB[0], EXPAND, t)
+	assert_token_value_is(resultB[0], "USER", t)
+
+	resultC := Tokenize("test$USER")
+	assert_length_is(2, resultC, t)
+	assert_token_kind_is(resultC[1], EXPAND, t)
+	assert_token_value_is(resultC[1], "USER", t)
+}
+
+func TestCanIdentifyDollarSignAsLiteralOnStringEnds(t *testing.T) {
+	resultA := Tokenize("foo$")
+	t.Logf("Output: %v", resultA)
+
+	assert_length_is(1, resultA, t)
+	assert_token_kind_is(resultA[0], LITERAL, t)
+	assert_token_value_is(resultA[0], "foo$", t)
+
+	resultB := Tokenize("foo$ bar")
+	t.Logf("Output: %v", resultB)
+	assert_length_is(3, resultB, t)
+	assert_token_kind_is(resultB[0], LITERAL, t)
+	assert_token_value_is(resultB[0], "foo$", t)
 }
 
 func assert_length_is(i int, r []Token, t *testing.T) {
@@ -71,9 +89,19 @@ func assert_length_is(i int, r []Token, t *testing.T) {
 func assert_token_kind_is(tkn Token, k TokenKind, t *testing.T) {
 	if tkn.Kind != k {
 		t.Errorf(
-			"Expected token kind to be %s, got %s.",
+			"Expected token kind to be \"%s\", got \"%s\".",
 			get_token_kind(k),
 			get_token_kind(tkn.Kind),
+		)
+	}
+}
+
+func assert_token_value_is(tkn Token, v string, t *testing.T) {
+	if tkn.Value != v {
+		t.Errorf(
+			"Expected token value to be \"%s\", got \"%s\".",
+			v,
+			tkn.Value,
 		)
 	}
 }
