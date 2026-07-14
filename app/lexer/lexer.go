@@ -14,7 +14,7 @@ type Token struct {
 const (
 	WHITE_SPACE TokenKind = iota
 	LITERAL
-	NUMBER
+	NUMERIC
 	STRING_LITERAL
 	STRING_EXPAND
 	EXPAND
@@ -61,16 +61,16 @@ func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {
 	// 	return STRING_EXPAND
 	// case r == '>':
 	// 	return REDIRECT_OUT
-	// case is_numeric(r):
-	// 	if has_lookup && lookup == '>' {
-	// 		switch r {
-	// 		case '1':
-	// 			return REDIRECT_OUT
-	// 		case '2':
-	// 			return REDIRECT_ERR
-	// 		}
-	// 	}
-	// 	return NUMBER
+	case is_numeric(r):
+		// 	if has_lookup && lookup == '>' {
+		// 		switch r {
+		// 		case '1':
+		// 			return REDIRECT_OUT
+		// 		case '2':
+		// 			return REDIRECT_ERR
+		// 		}
+		// 	}
+		return NUMERIC
 	default:
 		return LITERAL
 	}
@@ -94,10 +94,10 @@ func get_value_from(k TokenKind, i *int, input string) string {
 			}
 			(*i)++
 		}
-	// case NUMBER:
-	// 	for (*i) < len(input) && is_numeric(input[*i]) {
-	// 		(*i)++
-	// 	}
+	case NUMERIC:
+		for (*i) < len(input) && is_numeric(input[*i]) {
+			(*i)++
+		}
 	// case STRING_LITERAL:
 	// 	for (*i) < len(input) && input[*i] != '\'' {
 	// 		(*i)++
@@ -165,7 +165,7 @@ func get_token_kind(k TokenKind) string {
 		return "REDIRECT_OUT"
 	case REDIRECT_ERR:
 		return "REDIRECT_ERR"
-	case NUMBER:
+	case NUMERIC:
 		return "NUMBER"
 	case LITERAL:
 		return "LITERAL"

@@ -80,6 +80,19 @@ func TestCanIdentifyDollarSignAsLiteralOnStringEnds(t *testing.T) {
 	assert_token_value_is(resultB[0], "foo$", t)
 }
 
+func TestCanCreateNumericToken(t *testing.T) {
+	resultA := Tokenize("432")
+	t.Logf("Output: %v", resultA)
+	assert_token_kind_is(resultA[0], NUMERIC, t)
+	assert_token_value_is(resultA[0], "432", t)
+
+	resultB := Tokenize("432foo")
+	t.Logf("Output: %v", resultB)
+	assert_token_kind_is(resultB[0], NUMERIC, t)
+	assert_token_value_is(resultB[0], "432", t)
+
+}
+
 func assert_length_is(i int, r []Token, t *testing.T) {
 	if len(r) != i {
 		t.Errorf("Expected %d token, %d tokens received.", i, len(r))
