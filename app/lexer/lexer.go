@@ -62,14 +62,14 @@ func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {
 	case r == '>':
 		return REDIRECT_OUT
 	case is_numeric(r):
-		// 	if has_lookup && lookup == '>' {
-		// 		switch r {
-		// 		case '1':
-		// 			return REDIRECT_OUT
-		// 		case '2':
-		// 			return REDIRECT_ERR
-		// 		}
-		// 	}
+		if has_lookup && lookup == '>' {
+			switch r {
+			case '1':
+				return REDIRECT_OUT
+			case '2':
+				return REDIRECT_ERR
+			}
+		}
 		return NUMERIC
 	default:
 		return LITERAL
@@ -143,31 +143,22 @@ func get_value_from(k TokenKind, i *int, input string) string {
 		(*i) += 2
 		return input[start:min(*i, len(input))]
 	case REDIRECT_OUT:
-		(*i)++
+		char := input[*i]
+		if char == '1' {
+			(*i) += 2
+		} else {
+			(*i)++
+		}
 		return input[start:min(*i, len(input))]
-		// 	char := input[*i]
-		// 	if char == '1' {
-		// 		(*i) += 2
-		// 	} else {
-		// 		(*i)++
-		// 	}
-		// case REDIRECT_ERR:
-		// 	(*i) += 2
+	case REDIRECT_ERR:
+		(*i) += 2
 	}
 
 	return input[start:min(*i, len(input))]
 }
 
-func is_alphabetic(c byte) bool {
-	return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
-}
-
 func is_numeric(c byte) bool {
 	return c >= '0' && c <= '9'
-}
-
-func is_alphanum(c byte) bool {
-	return is_alphabetic(c) || is_numeric(c)
 }
 
 func get_token_kind(k TokenKind) string {
