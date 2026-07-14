@@ -57,10 +57,10 @@ func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {
 		}
 	case r == '\'':
 		return STRING_LITERAL
-	// case r == '"':
-	// 	return STRING_EXPAND
-	// case r == '>':
-	// 	return REDIRECT_OUT
+	case r == '"':
+		return STRING_EXPAND
+	case r == '>':
+		return REDIRECT_OUT
 	case is_numeric(r):
 		// 	if has_lookup && lookup == '>' {
 		// 		switch r {
@@ -112,10 +112,17 @@ func get_value_from(k TokenKind, i *int, input string) string {
 			}
 		}
 		return input[start:min((*i)-1, len(input))]
-	// case STRING_EXPAND:
-	// 	for (*i) < len(input) && input[*i] != '"' {
-	// 		(*i)++
-	// 	}
+	case STRING_EXPAND:
+		start++
+		(*i)++
+		for (*i) < len(input) {
+			(*i)++
+			if (*i) < len(input) && input[*i] == '"' {
+				(*i)++
+				break
+			}
+		}
+		return input[start:min((*i)-1, len(input))]
 	case EXPAND:
 		start += 1
 		(*i) += 2
@@ -130,10 +137,14 @@ func get_value_from(k TokenKind, i *int, input string) string {
 				}
 			}
 		}
+		return input[start:min(*i, len(input))]
 	case ESCAPE:
 		start += 1
 		(*i) += 2
-		// case REDIRECT_OUT:
+		return input[start:min(*i, len(input))]
+	case REDIRECT_OUT:
+		(*i)++
+		return input[start:min(*i, len(input))]
 		// 	char := input[*i]
 		// 	if char == '1' {
 		// 		(*i) += 2

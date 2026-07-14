@@ -100,6 +100,13 @@ func TestCanCreateStringLiteralToken(t *testing.T) {
 	assert_token_value_is(result[0], "foo $BAR  123", t)
 }
 
+func TestCanCreateStringExpandToken(t *testing.T) {
+	result := Tokenize("\"foo $BAR  123\"")
+	t.Logf("Output: %v", result)
+	assert_token_kind_is(result[0], STRING_EXPAND, t)
+	assert_token_value_is(result[0], "foo $BAR  123", t)
+}
+
 func assert_length_is(i int, r []Token, t *testing.T) {
 	if len(r) != i {
 		t.Errorf("Expected %d token, %d tokens received.", i, len(r))
