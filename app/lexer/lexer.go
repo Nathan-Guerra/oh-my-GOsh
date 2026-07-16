@@ -1,5 +1,7 @@
 package lexer
 
+import "slices"
+
 type TokenKind int
 
 func (k TokenKind) String() string {
@@ -7,8 +9,9 @@ func (k TokenKind) String() string {
 }
 
 type Token struct {
-	Kind  TokenKind
-	Value string
+	Kind           TokenKind
+	Value          string
+	TokenizedValue *[]Token
 }
 
 const (
@@ -35,10 +38,56 @@ func Tokenize(input string) []Token {
 		}
 		kind := which_kind(input[i], lookup, has_lookup)
 		value := get_value_from(kind, &i, input)
-		tokens = append(tokens, Token{kind, value})
+		if kind == STRING_EXPAND {
+			tokenized_value := tokenize_for_double_quotes(value)
+			tokens = append(tokens, Token{kind, value, tokenized_value})
+		} else {
+			tokens = append(tokens, Token{kind, value, nil})
+		}
 	}
 
 	return tokens
+}
+
+func tokenize_for_double_quotes(input string) *[]Token {
+	i := 0
+	tokens := make([]Token, 0)
+	for i < len(input) {
+		var lookup byte
+		var has_lookup bool
+		if i+1 < len(input) {
+			lookup = input[i+1]
+			has_lookup = true
+		}
+		kind := which_kind_for_double_quotes(input[i], lookup, has_lookup)
+		value := get_value_from(kind, &i, input)
+		tokens = append(tokens, Token{kind, value, nil})
+	}
+
+	return &tokens
+}
+
+func which_kind_for_double_quotes(r byte, lookup byte, has_lookup bool) TokenKind {
+	switch {
+	case r == ' ':
+		return WHITE_SPACE
+	case r == '\\':
+		escapable_runes := []byte{'"', '$', '\\'}
+		if has_lookup && slices.Contains(escapable_runes[:], lookup) {
+			return ESCAPE
+		}
+		return LITERAL
+	case r == '$':
+		if !has_lookup || lookup == ' ' {
+			return LITERAL
+		} else {
+			return EXPAND
+		}
+	case is_numeric(r):
+		return NUMERIC
+	default:
+		return LITERAL
+	}
 }
 
 func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {

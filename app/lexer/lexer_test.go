@@ -109,6 +109,25 @@ func TestCanCreateStringExpandToken(t *testing.T) {
 	assert_token_value_is(result[0], "foo $BAR  123", t)
 }
 
+func TestStringExpandInnerTokenizer(t *testing.T) {
+	result := Tokenize("\"'foo' \\$BAR  123\"")
+	assert_length_is(1, result, t)
+	assert_token_kind_is(result[0], STRING_EXPAND, t)
+	assert_token_value_is(result[0], "'foo' \\$BAR  123", t)
+	if result[0].TokenizedValue == nil {
+		t.Error("Error tokenizing expanded string.")
+	}
+	t.Logf("Output: %v", (*result[0].TokenizedValue))
+	assert_length_is(6, *result[0].TokenizedValue, t)
+	assert_token_kind_is((*result[0].TokenizedValue)[0], LITERAL, t)
+	assert_token_kind_is((*result[0].TokenizedValue)[1], WHITE_SPACE, t)
+	assert_token_kind_is((*result[0].TokenizedValue)[2], ESCAPE, t)
+	assert_token_kind_is((*result[0].TokenizedValue)[3], LITERAL, t)
+	assert_token_kind_is((*result[0].TokenizedValue)[4], WHITE_SPACE, t)
+	assert_token_kind_is((*result[0].TokenizedValue)[5], NUMERIC, t)
+
+}
+
 func TestCanCreateRedirectOutToken(t *testing.T) {
 	resultA := Tokenize(">")
 	t.Logf("Output: %v", resultA)
@@ -146,18 +165,18 @@ func TestCanCreateRedirectErrToken(t *testing.T) {
 }
 
 func TestCanTokenizeComplexInput(t *testing.T) {
-	resultD := Tokenize("echo \"foo   bar\"qux 1000 1>/path/to/file.txt")
-	t.Logf("Output: %v", resultD)
-	assert_length_is(9, resultD, t)
-	assert_token_kind_is(resultD[0], LITERAL, t)
-	assert_token_kind_is(resultD[1], WHITE_SPACE, t)
-	assert_token_kind_is(resultD[2], STRING_EXPAND, t)
-	assert_token_kind_is(resultD[3], LITERAL, t)
-	assert_token_kind_is(resultD[4], WHITE_SPACE, t)
-	assert_token_kind_is(resultD[5], NUMERIC, t)
-	assert_token_kind_is(resultD[6], WHITE_SPACE, t)
-	assert_token_kind_is(resultD[7], REDIRECT_OUT, t)
-	assert_token_kind_is(resultD[8], LITERAL, t)
+	result := Tokenize("echo \"foo   bar\"qux 1000 1>/path/to/file.txt")
+	t.Logf("Output: %v", result)
+	assert_length_is(9, result, t)
+	assert_token_kind_is(result[0], LITERAL, t)
+	assert_token_kind_is(result[1], WHITE_SPACE, t)
+	assert_token_kind_is(result[2], STRING_EXPAND, t)
+	assert_token_kind_is(result[3], LITERAL, t)
+	assert_token_kind_is(result[4], WHITE_SPACE, t)
+	assert_token_kind_is(result[5], NUMERIC, t)
+	assert_token_kind_is(result[6], WHITE_SPACE, t)
+	assert_token_kind_is(result[7], REDIRECT_OUT, t)
+	assert_token_kind_is(result[8], LITERAL, t)
 }
 
 func assert_length_is(i int, r []Token, t *testing.T) {
