@@ -156,6 +156,7 @@ func get_value_from_for_double_quotes(k TokenKind, i *int, input string) string 
 		}
 		return input[start:min(*i, len(input))]
 	default: // LITERAL
+		(*i)++
 		for (*i) < len(input) &&
 			input[*i] != ' ' &&
 			input[*i] != '\\' {
