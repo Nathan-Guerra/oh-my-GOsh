@@ -60,7 +60,7 @@ func tokenize_for_double_quotes(input string) *[]Token {
 			has_lookup = true
 		}
 		kind := which_kind_for_double_quotes(input[i], lookup, has_lookup)
-		value := get_value_from(kind, &i, input)
+		value := get_value_from_for_double_quotes(kind, &i, input)
 		tokens = append(tokens, Token{kind, value, nil})
 	}
 
@@ -125,6 +125,51 @@ func which_kind(r byte, lookup byte, has_lookup bool) TokenKind {
 	}
 }
 
+func get_value_from_for_double_quotes(k TokenKind, i *int, input string) string {
+	start := *i
+	switch k {
+	case WHITE_SPACE:
+		(*i)++
+		return input[start:min(*i, len(input))]
+	case ESCAPE:
+		start += 1
+		(*i) += 2
+		return input[start:min(*i, len(input))]
+	case EXPAND:
+		start += 1
+		(*i) += 2
+
+		if (*i) < len(input) {
+			char := input[*i]
+			if char == '$' {
+				(*i)++
+			} else {
+				for (*i) < len(input) && input[*i] >= 'A' && input[*i] <= 'Z' {
+					(*i)++
+				}
+			}
+		}
+		return input[start:min(*i, len(input))]
+	case NUMERIC:
+		for (*i) < len(input) && is_numeric(input[*i]) {
+			(*i)++
+		}
+		return input[start:min(*i, len(input))]
+	default: // LITERAL
+		for (*i) < len(input) &&
+			input[*i] != ' ' &&
+			input[*i] != '\\' {
+			if input[*i] == '$' &&
+				*i+1 < len(input) &&
+				input[*i+1] != ' ' {
+				break
+			}
+			(*i)++
+		}
+		return input[start:min(*i, len(input))]
+	}
+}
+
 func get_value_from(k TokenKind, i *int, input string) string {
 	start := *i
 	switch k {
@@ -165,10 +210,42 @@ func get_value_from(k TokenKind, i *int, input string) string {
 		start++
 		(*i)++
 		for (*i) < len(input) {
-			(*i)++
-			if (*i) < len(input) && input[*i] == '"' {
+			var inner_kind TokenKind
+			if *i+1 < len(input) {
+				inner_kind = which_kind(input[*i], input[(*i)+1], true)
+			} else {
+				inner_kind = which_kind(input[*i], 'x', false)
+			}
+
+			switch inner_kind {
+			case WHITE_SPACE:
+				for (*i) < len(input) && input[*i] == ' ' {
+					(*i)++
+				}
+			case NUMERIC:
+				for (*i) < len(input) && is_numeric(input[*i]) {
+					(*i)++
+				}
+			case EXPAND:
 				(*i)++
-				break
+				if (*i) < len(input) {
+					char := input[*i]
+					if char == '$' {
+						(*i)++
+					} else {
+						for (*i) < len(input) && input[*i] >= 'A' && input[*i] <= 'Z' {
+							(*i)++
+						}
+					}
+				}
+			case ESCAPE:
+				(*i) += 2
+			default:
+				if input[*i] == '"' {
+					(*i)++
+					break
+				}
+				(*i)++
 			}
 		}
 		return input[start:min((*i)-1, len(input))]

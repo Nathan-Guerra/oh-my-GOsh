@@ -109,6 +109,14 @@ func TestCanCreateStringExpandToken(t *testing.T) {
 	assert_token_value_is(result[0], "foo $BAR  123", t)
 }
 
+func TestCanCreateComplexStringExpandToken(t *testing.T) {
+	result := Tokenize("\"foo $BAR\\\"  123\"")
+	t.Logf("Output: %v", result)
+	assert_length_is(1, result, t)
+	assert_token_kind_is(result[0], STRING_EXPAND, t)
+	assert_token_value_is(result[0], "foo $BAR\\\"  123", t) // -> literal string (\")
+}
+
 func TestStringExpandInnerTokenizer(t *testing.T) {
 	result := Tokenize("\"'foo' \\$BAR  123\"")
 	assert_length_is(1, result, t)
