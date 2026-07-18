@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 type Command struct {
 	CommandName string
 	Arguments   []string
+	Stdout      io.Writer
+	Stderr      io.Writer
 }
 
 func (c *Command) push(s string) {
@@ -27,52 +30,100 @@ func (c *Command) push(s string) {
 func CreateCommand(tokens []lexer.Token) *Command {
 	var arg strings.Builder
 	cmd := &Command{}
-	for _, token := range tokens {
+
+parsingLoop:
+	for i, token := range tokens {
 		switch token.Kind {
-		case lexer.WHITE_SPACE:
+		case lexer.Whitespace:
 			cmd.push(arg.String())
 			arg.Reset()
-		case lexer.LITERAL,
-			lexer.NUMERIC,
-			lexer.STRING_LITERAL,
-			lexer.ESCAPE:
+		case lexer.Literal,
+			lexer.Numeric,
+			lexer.StringLiteral,
+			lexer.Escape:
 			arg.WriteString(token.Value)
-		case lexer.EXPAND:
+		case lexer.Expand:
 			if token.Value == "$" {
 				arg.WriteString(strconv.Itoa(os.Getpid()))
 			} else {
 				arg.WriteString(os.Getenv(token.Value))
 			}
-		case lexer.STRING_EXPAND:
+		case lexer.StringExpand:
 			// already have a command, treat as a string
 			var s strings.Builder
 			for _, token := range *token.TokenizedValue {
 				switch token.Kind {
-				case lexer.WHITE_SPACE:
+				case lexer.Whitespace:
 					if cmd.CommandName != "" {
 						s.WriteString(token.Value)
 					} else {
 						cmd.push(s.String())
 						s.Reset()
 					}
-				case lexer.LITERAL,
-					lexer.NUMERIC,
-					lexer.ESCAPE:
+				case lexer.Literal,
+					lexer.Numeric,
+					lexer.Escape:
 					s.WriteString(token.Value)
-				case lexer.EXPAND:
+				case lexer.Expand:
 					if token.Value == "$" {
 						s.WriteString(strconv.Itoa(os.Getpid()))
 					} else {
 						s.WriteString(os.Getenv(token.Value))
 					}
 				default:
-					panic(fmt.Sprintf("==Error== Token kind not identified {%s}.", token.Kind))
+					panic(fmt.Sprintf("==Error== Inner token kind not identified {%s}.", token.Kind))
 				}
 			}
 
 			if len(s.String()) != 0 {
 				cmd.push(s.String())
 			}
+		case lexer.RedirectOut:
+			var value strings.Builder
+		redirectLoop:
+			for _, subToken := range tokens[i+1:] {
+				switch subToken.Kind {
+				case lexer.Whitespace:
+					if len(value.String()) > 0 {
+						break redirectLoop
+					}
+
+					continue redirectLoop
+				case lexer.Expand:
+					if subToken.Value == "$" {
+						value.WriteString(strconv.Itoa(os.Getpid()))
+					} else {
+						value.WriteString(os.Getenv(subToken.Value))
+					}
+				case lexer.Literal, lexer.StringLiteral,
+					lexer.Numeric,
+					lexer.Escape:
+					value.WriteString(subToken.Value)
+				}
+			}
+
+			fi, err := os.Stat(value.String())
+
+			if err != nil { // error, try to create file
+				newFile, err := os.Create(value.String())
+				if err != nil {
+					panic(err)
+				}
+
+				cmd.Stdout = newFile
+			} else {
+				if fi.IsDir() {
+					panic("==Error== Cannot write to a directory.")
+				}
+
+				file, err := os.OpenFile(value.String(), os.O_WRONLY, 0666)
+				if err != nil {
+					panic(err)
+				}
+				cmd.Stdout = file
+			}
+
+			break parsingLoop
 		default:
 			panic(fmt.Sprintf("==Error== Token kind not identified {%s}.", token.Kind))
 		}
@@ -81,5 +132,6 @@ func CreateCommand(tokens []lexer.Token) *Command {
 	if len(arg.String()) != 0 {
 		cmd.push(arg.String())
 	}
+
 	return cmd
 }
