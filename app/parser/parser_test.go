@@ -87,3 +87,14 @@ func TestParseCommandInDoubleQuotes(t *testing.T) {
 		t.Errorf("Expected exactly 1 argument, (%d) received.", len(cmd.Arguments))
 	}
 }
+
+func TestParseJoinedTokens(t *testing.T) {
+	cmd := CreateCommand(lexer.Tokenize("echo \"world\\\"insidequotes\"script\\\""))
+	if cmd.CommandName != "cat" {
+		t.Errorf("Expected name 'echo', '%s' received.", cmd.CommandName)
+	}
+
+	if len(cmd.Arguments) != 1 {
+		t.Errorf("Expected exactly 1 argument, (%d) received.", len(cmd.Arguments))
+	}
+}

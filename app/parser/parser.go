@@ -78,10 +78,10 @@ parsingLoop:
 				}
 			}
 
-			if len(arg.String()) != 0 {
-				cmd.push(arg.String())
-				arg.Reset()
-			}
+			// if len(arg.String()) != 0 {
+			// 	cmd.push(arg.String())
+			// 	arg.Reset()
+			// }
 		case lexer.RedirectOut:
 			var value strings.Builder
 		redirectLoop:
