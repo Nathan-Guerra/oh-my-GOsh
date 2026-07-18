@@ -1,0 +1,17 @@
+package lexer
+
+import "testing"
+
+func TestCanPrintToken(t *testing.T) {
+	var tkn TokenKind
+	tkn = 1 // whitespace
+
+	if tkn.String() != "WHITE_SPACE" {
+		t.Errorf("Cannot stringify token name, (%s) given, (%s) expected.", tkn.String(), "WHITE_SPACE")
+	}
+
+	var unknown TokenKind = 999
+	if unknown.String() != "999" {
+		t.Errorf("Cannot stringify token name, (%s) given, (%s) expected.", tkn.String(), "999")
+	}
+}
