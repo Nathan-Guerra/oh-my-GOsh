@@ -37,8 +37,10 @@ parsingLoop:
 	for i, token := range tokens {
 		switch token.Kind {
 		case lexer.Whitespace:
-			cmd.push(arg.String())
-			arg.Reset()
+			if len(arg.String()) > 0 {
+				cmd.push(arg.String())
+				arg.Reset()
+			}
 		case lexer.Literal,
 			lexer.Numeric,
 			lexer.StringLiteral,
@@ -52,33 +54,33 @@ parsingLoop:
 			}
 		case lexer.StringExpand:
 			// already have a command, treat as a string
-			var s strings.Builder
 			for _, token := range *token.TokenizedValue {
 				switch token.Kind {
 				case lexer.Whitespace:
 					// if cmd.CommandName != "" {
-					s.WriteString(token.Value)
+					arg.WriteString(token.Value)
 					// } else {
 					// 	cmd.push(s.String())
-					// 	s.Reset()
+					// 	arg.Reset()
 					// }
 				case lexer.Literal,
 					lexer.Numeric,
 					lexer.Escape:
-					s.WriteString(token.Value)
+					arg.WriteString(token.Value)
 				case lexer.Expand:
 					if token.Value == "$" {
-						s.WriteString(strconv.Itoa(os.Getpid()))
+						arg.WriteString(strconv.Itoa(os.Getpid()))
 					} else {
-						s.WriteString(os.Getenv(token.Value))
+						arg.WriteString(os.Getenv(token.Value))
 					}
 				default:
 					panic(fmt.Sprintf("==Error== Inner token kind not identified {%s}.", token.Kind))
 				}
 			}
 
-			if len(s.String()) != 0 {
-				cmd.push(s.String())
+			if len(arg.String()) != 0 {
+				cmd.push(arg.String())
+				arg.Reset()
 			}
 		case lexer.RedirectOut:
 			var value strings.Builder

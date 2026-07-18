@@ -76,3 +76,14 @@ func TestParseCommandWithDirAsRedirectOut(t *testing.T) {
 	t.Logf("File: %s, created at: %s", info.Name(), info.ModTime().Local())
 	os.Remove(strconv.Itoa(pid))
 }
+
+func TestParseCommandInDoubleQuotes(t *testing.T) {
+	cmd := CreateCommand(lexer.Tokenize("\"cat\" /foo/bar"))
+	if cmd.CommandName != "cat" {
+		t.Errorf("Expected name 'echo', '%s' received.", cmd.CommandName)
+	}
+
+	if len(cmd.Arguments) != 1 {
+		t.Errorf("Expected exactly 1 argument, (%d) received.", len(cmd.Arguments))
+	}
+}
