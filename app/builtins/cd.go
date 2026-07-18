@@ -40,7 +40,7 @@ func cd(args []string) (out string, err error) {
 
 	err = os.Chdir(args[0])
 	if err != nil {
-		err = fmt.Errorf("cd: %s: No such file or directory", args[0])
+		err = fmt.Errorf("cd: %s: No such file or directory\n", args[0])
 	}
 
 	os.Setenv("OLDPWD", cur_dir)
