@@ -56,12 +56,12 @@ parsingLoop:
 			for _, token := range *token.TokenizedValue {
 				switch token.Kind {
 				case lexer.Whitespace:
-					if cmd.CommandName != "" {
-						s.WriteString(token.Value)
-					} else {
-						cmd.push(s.String())
-						s.Reset()
-					}
+					// if cmd.CommandName != "" {
+					s.WriteString(token.Value)
+					// } else {
+					// 	cmd.push(s.String())
+					// 	s.Reset()
+					// }
 				case lexer.Literal,
 					lexer.Numeric,
 					lexer.Escape:
