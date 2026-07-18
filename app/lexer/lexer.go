@@ -216,13 +216,10 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 			l.NextByte()
 		}
 		return Token{RedirectOut, l.GetStringSlice(start, l.Position), nil}
-
 	case RedirectErr:
 		l.NextByte()
 		l.NextByte()
-
 		return Token{RedirectErr, l.GetStringSlice(start, l.Position), nil}
-
 	default: // Literal
 		for !l.IsEOL() &&
 			!l.ByteIs(' ') &&
