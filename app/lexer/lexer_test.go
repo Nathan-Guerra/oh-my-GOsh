@@ -212,7 +212,7 @@ func TestCanCreateRedirectErrToken(t *testing.T) {
 
 func TestCanTokenizeComplexInput(t *testing.T) {
 	result := Tokenize("echo \"foo   bar\"qux 1000 1>/path/to/file.txt")
-	t.Logf("Output: %v", result)
+	// t.Logf("Output: %v", result)
 	assert_length_is(9, result, t)
 	assert_token_kind_is(result[0], Literal, t)
 	assert_token_kind_is(result[1], Whitespace, t)
@@ -223,6 +223,32 @@ func TestCanTokenizeComplexInput(t *testing.T) {
 	assert_token_kind_is(result[6], Whitespace, t)
 	assert_token_kind_is(result[7], RedirectOut, t)
 	assert_token_kind_is(result[8], Literal, t)
+
+	resultB := Tokenize("cat /tmp/pig/\"number 96\" /tmp/pig/\"doublequote \\\" 68\" /tmp/pig/\"backslash \\\\ 19\"")
+	t.Logf("Output: %v", resultB)
+	assert_length_is(10, resultB, t)
+	assert_token_kind_is(resultB[0], Literal, t)
+	assert_token_kind_is(resultB[1], Whitespace, t)
+	assert_token_kind_is(resultB[2], Literal, t)
+	assert_token_kind_is(resultB[3], StringExpand, t)
+	assert_token_kind_is(resultB[4], Whitespace, t)
+	assert_token_kind_is(resultB[5], Literal, t)
+	assert_token_kind_is(resultB[6], StringExpand, t)
+	assert_token_kind_is(resultB[7], Whitespace, t)
+	assert_token_kind_is(resultB[8], Literal, t)
+	assert_token_kind_is(resultB[9], StringExpand, t)
+
+	assert_token_value_is(resultB[0], "cat", t)
+	assert_token_value_is(resultB[1], " ", t)
+	assert_token_value_is(resultB[2], "/tmp/pig/", t)
+	assert_token_value_is(resultB[3], "number 96", t)
+	assert_token_value_is(resultB[4], " ", t)
+	assert_token_value_is(resultB[5], "/tmp/pig/", t)
+	assert_token_value_is(resultB[6], "doublequote \\\" 68", t)
+	assert_token_value_is(resultB[7], " ", t)
+	assert_token_value_is(resultB[8], "/tmp/pig/", t)
+	assert_token_value_is(resultB[9], "backslash \\\\ 19", t)
+
 }
 
 func assert_length_is(i int, r []Token, t *testing.T) {
