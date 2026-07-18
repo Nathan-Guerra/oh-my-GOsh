@@ -1,6 +1,6 @@
 package builtins
 
-type Builtin func(args []string) error
+type Builtin func(args []string) (string, error)
 
 var Builtins = map[string]Builtin{}
 

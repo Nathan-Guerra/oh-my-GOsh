@@ -1,19 +1,17 @@
 package builtins
 
 import (
-	"fmt"
 	"os"
 )
 
-func pwd(args []string) error {
+func pwd(args []string) (out string, err error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return err
+		return
 	}
 
-	fmt.Println(wd)
-
-	return nil
+	out = wd
+	return
 }
 
 func init() {

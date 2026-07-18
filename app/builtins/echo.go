@@ -1,22 +1,22 @@
 package builtins
 
 import (
-	"fmt"
+	"strings"
 )
 
-func echo(args []string) error {
-	var out string
+func echo(args []string) (out string, err error) {
+	var s strings.Builder
 	for i := 0; i < len(args); i++ {
 		if args[i] == "" {
 			continue
 		}
 		if i > 0 {
-			out += " "
+			s.WriteRune(' ')
 		}
-		out += args[i]
+		s.WriteString(args[i])
 	}
-	fmt.Println(out)
-	return nil
+	out = s.String()
+	return
 }
 
 func init() {
