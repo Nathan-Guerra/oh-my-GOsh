@@ -10,7 +10,7 @@ func pwd(args []string) (out string, err error) {
 		return
 	}
 
-	out = wd
+	out = wd + string('\n')
 	return
 }
 

@@ -15,6 +15,8 @@ func echo(args []string) (out string, err error) {
 		}
 		s.WriteString(args[i])
 	}
+
+	s.WriteByte('\n')
 	out = s.String()
 	return
 }

@@ -24,6 +24,10 @@ func main() {
 
 		input := strings.TrimSpace(scanner.Text())
 		cmd := parser.CreateCommand(lexer.Tokenize(input))
+		fmt.Printf("Output: %v\n", cmd)
+		fmt.Printf("Output: %v\n", cmd.CommandName)
+		fmt.Printf("Output: %v\n", cmd.Arguments)
+		// continue
 		if cmd.CommandName == "" {
 			continue
 		}
@@ -31,8 +35,13 @@ func main() {
 		command, exists := builtins.Builtins[cmd.CommandName]
 		if exists {
 			out, err := command(cmd.Arguments)
-			cmd.Stdout.Write([]byte(out))
-			cmd.Stderr.Write([]byte(err.Error()))
+			if len(out) > 0 {
+				cmd.Stdout.Write([]byte(out))
+			}
+			if err != nil {
+				cmd.Stderr.Write([]byte(err.Error()))
+
+			}
 		} else if _, err := exec.LookPath(cmd.CommandName); err == nil {
 			externalCommand := exec.Command(cmd.CommandName, cmd.Arguments...)
 			externalCommand.Stdin = os.Stdin

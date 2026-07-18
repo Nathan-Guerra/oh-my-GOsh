@@ -30,6 +30,8 @@ func (c *Command) push(s string) {
 func CreateCommand(tokens []lexer.Token) *Command {
 	var arg strings.Builder
 	cmd := &Command{}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 parsingLoop:
 	for i, token := range tokens {
