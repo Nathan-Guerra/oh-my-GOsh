@@ -24,10 +24,6 @@ func main() {
 
 		input := strings.TrimSpace(scanner.Text())
 		cmd := parser.CreateCommand(lexer.Tokenize(input))
-		fmt.Printf("Output: %v\n", cmd)
-		fmt.Printf("Output: %v\n", cmd.CommandName)
-		fmt.Printf("Output: %v\n", cmd.Arguments)
-		// continue
 		if cmd.CommandName == "" {
 			continue
 		}
