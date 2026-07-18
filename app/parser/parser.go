@@ -57,12 +57,7 @@ parsingLoop:
 			for _, token := range *token.TokenizedValue {
 				switch token.Kind {
 				case lexer.Whitespace:
-					// if cmd.CommandName != "" {
 					arg.WriteString(token.Value)
-					// } else {
-					// 	cmd.push(s.String())
-					// 	arg.Reset()
-					// }
 				case lexer.Literal,
 					lexer.Numeric,
 					lexer.Escape:
@@ -77,11 +72,6 @@ parsingLoop:
 					panic(fmt.Sprintf("==Error== Inner token kind not identified {%s}.", token.Kind))
 				}
 			}
-
-			// if len(arg.String()) != 0 {
-			// 	cmd.push(arg.String())
-			// 	arg.Reset()
-			// }
 		case lexer.RedirectOut:
 			var value strings.Builder
 		redirectOutLoop:
@@ -109,6 +99,7 @@ parsingLoop:
 			fi, err := os.Stat(value.String())
 
 			if err != nil { // error, try to create file
+				fmt.Println(err)
 				newFile, err := os.Create(value.String())
 				if err != nil {
 					panic(err)
@@ -120,7 +111,7 @@ parsingLoop:
 					panic("==Error== Cannot write to a directory.")
 				}
 
-				file, err := os.OpenFile(value.String(), os.O_WRONLY, 0666)
+				file, err := os.OpenFile(value.String(), os.O_WRONLY|os.O_TRUNC, 0666)
 				if err != nil {
 					panic(err)
 				}
@@ -128,7 +119,6 @@ parsingLoop:
 			}
 
 			break parsingLoop
-
 		case lexer.RedirectErr:
 			var value strings.Builder
 		redirectErrLoop:
@@ -172,6 +162,55 @@ parsingLoop:
 					panic(err)
 				}
 				cmd.Stderr = file
+			}
+
+			break parsingLoop
+		case lexer.RedirectOutAppend:
+			fmt.Println("appending")
+			var value strings.Builder
+		redirectOutAppendLoop:
+			for _, subToken := range tokens[i+1:] {
+				switch subToken.Kind {
+				case lexer.Whitespace:
+					if len(value.String()) > 0 {
+						break redirectOutAppendLoop
+					}
+
+					continue redirectOutAppendLoop
+				case lexer.Expand:
+					if subToken.Value == "$" {
+						value.WriteString(strconv.Itoa(os.Getpid()))
+					} else {
+						value.WriteString(os.Getenv(subToken.Value))
+					}
+				case lexer.Literal, lexer.StringLiteral,
+					lexer.Numeric,
+					lexer.Escape:
+					value.WriteString(subToken.Value)
+				}
+			}
+
+			fi, err := os.Stat(value.String())
+
+			if err != nil { // error, try to create file
+				fmt.Println(err)
+
+				newFile, err := os.Create(value.String())
+				if err != nil {
+					panic(err)
+				}
+
+				cmd.Stdout = newFile
+			} else {
+				if fi.IsDir() {
+					panic("==Error== Cannot write to a directory.")
+				}
+
+				file, err := os.OpenFile(value.String(), os.O_WRONLY|os.O_APPEND, 0666)
+				if err != nil {
+					panic(err)
+				}
+				cmd.Stdout = file
 			}
 
 			break parsingLoop

@@ -56,6 +56,9 @@ func (l *Lexer) MatchTokenKind(r byte, lookup *byte) TokenKind {
 	case l.ByteIs('"'):
 		return StringExpand
 	case l.ByteIs('>'):
+		if l.Peek() != nil && *l.Peek() == '>' {
+			return RedirectOutAppend
+		}
 		return RedirectOut
 	case l.IsNumeric(l.GetCurByte()):
 		if l.Peek() != nil && *l.Peek() == '>' {
@@ -220,6 +223,10 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 		l.NextByte()
 		l.NextByte()
 		return Token{RedirectErr, l.GetStringSlice(start, l.Position), nil}
+	case RedirectOutAppend:
+		l.NextByte()
+		l.NextByte()
+		return Token{RedirectOutAppend, l.GetStringSlice(start, l.Position), nil}
 	default: // Literal
 		for !l.IsEOL() &&
 			!l.ByteIs(' ') &&

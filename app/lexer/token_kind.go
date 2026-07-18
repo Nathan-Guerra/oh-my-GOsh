@@ -7,7 +7,7 @@ type TokenKind int
 func (k TokenKind) String() string {
 	switch k {
 	case Whitespace:
-		return "WHITE_SPACE"
+		return "WHITESPACE"
 	case Literal:
 		return "LITERAL"
 	case Numeric:
@@ -24,6 +24,8 @@ func (k TokenKind) String() string {
 		return "REDIRECT_OUT"
 	case RedirectErr:
 		return "REDIRECT_ERR"
+	case RedirectOutAppend:
+		return "REDIRECT_OUT_APPEND"
 	default:
 		return strconv.Itoa(int(k))
 	}
@@ -40,4 +42,5 @@ const (
 	Escape
 	RedirectOut
 	RedirectErr
+	RedirectOutAppend
 )

@@ -195,6 +195,13 @@ func TestCanCreateRedirectOutToken(t *testing.T) {
 	assert_token_kind_is(resultC[2], RedirectOut, t)
 }
 
+func TestCanCreateRedirectOutAppendToken(t *testing.T) {
+	result := Tokenize(">>")
+	assert_length_is(1, result, t)
+	assert_token_kind_is(result[0], RedirectOutAppend, t)
+	assert_token_value_is(result[0], ">>", t)
+}
+
 func TestCanCreateRedirectErrToken(t *testing.T) {
 	result := Tokenize("2>")
 	t.Logf("Output: %v", result)

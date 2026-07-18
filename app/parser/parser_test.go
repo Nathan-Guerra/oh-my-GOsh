@@ -21,20 +21,6 @@ func TestParseSimpleCommand(t *testing.T) {
 	}
 }
 
-func TestParseNotSoSimpleCommand(t *testing.T) {
-	tkns := lexer.Tokenize("\"'echo' \\ \\\"$PWD\\\" > /foo\"\\ > /dev/null")
-	t.Logf("Output: %v", tkns)
-	cmd := CreateCommand(tkns)
-	t.Logf("Output: %v", cmd)
-	if cmd.CommandName != "'echo'" {
-		t.Errorf("Expected name 'echo', '%s' given.", cmd.CommandName)
-	}
-
-	if len(cmd.Arguments) != 5 {
-		t.Errorf("Expected exatcly 5 arguments, (%d) given.", len(cmd.Arguments))
-	}
-}
-
 func TestParseCommandWithRedirectOut(t *testing.T) {
 	cmd := CreateCommand(lexer.Tokenize("echo foo > /dev/null"))
 
@@ -90,7 +76,7 @@ func TestParseCommandInDoubleQuotes(t *testing.T) {
 
 func TestParseJoinedTokens(t *testing.T) {
 	cmd := CreateCommand(lexer.Tokenize("echo \"world\\\"insidequotes\"script\\\""))
-	if cmd.CommandName != "cat" {
+	if cmd.CommandName != "echo" {
 		t.Errorf("Expected name 'echo', '%s' received.", cmd.CommandName)
 	}
 

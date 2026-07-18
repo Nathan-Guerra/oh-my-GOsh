@@ -6,8 +6,8 @@ func TestCanPrintToken(t *testing.T) {
 	var tkn TokenKind
 	tkn = 1 // whitespace
 
-	if tkn.String() != "WHITE_SPACE" {
-		t.Errorf("Cannot stringify token name, (%s) given, (%s) expected.", tkn.String(), "WHITE_SPACE")
+	if tkn.String() != "WHITESPACE" {
+		t.Errorf("Cannot stringify token name, (%s) given, (%s) expected.", tkn.String(), "WHITESPACE")
 	}
 
 	var unknown TokenKind = 999
