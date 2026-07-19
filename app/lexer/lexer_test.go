@@ -200,6 +200,19 @@ func TestCanCreateRedirectOutAppendToken(t *testing.T) {
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], RedirectOutAppend, t)
 	assert_token_value_is(result[0], ">>", t)
+
+	resultB := Tokenize("1>>")
+	assert_length_is(1, resultB, t)
+	assert_token_kind_is(resultB[0], RedirectOutAppend, t)
+	assert_token_value_is(resultB[0], "1>>", t)
+
+}
+
+func TestCanCreateRedirecErrAppendToken(t *testing.T) {
+	result := Tokenize(">>")
+	assert_length_is(1, result, t)
+	assert_token_kind_is(result[0], RedirectOutAppend, t)
+	assert_token_value_is(result[0], ">>", t)
 }
 
 func TestCanCreateRedirectErrToken(t *testing.T) {

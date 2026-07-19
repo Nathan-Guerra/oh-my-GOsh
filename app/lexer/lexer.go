@@ -48,7 +48,7 @@ func (l *Lexer) PeekMany(i int) string {
 		return ""
 	}
 
-	return l.Source[l.Position : l.Position+i]
+	return l.Source[l.Position+1 : l.Position+1+i]
 }
 
 func (l *Lexer) MatchTokenKind(r byte, lookup *byte) TokenKind {
