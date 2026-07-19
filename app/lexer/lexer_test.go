@@ -209,10 +209,10 @@ func TestCanCreateRedirectOutAppendToken(t *testing.T) {
 }
 
 func TestCanCreateRedirecErrAppendToken(t *testing.T) {
-	result := Tokenize(">>")
+	result := Tokenize("2>>")
 	assert_length_is(1, result, t)
-	assert_token_kind_is(result[0], RedirectOutAppend, t)
-	assert_token_value_is(result[0], ">>", t)
+	assert_token_kind_is(result[0], RedirectErrAppend, t)
+	assert_token_value_is(result[0], "2>>", t)
 }
 
 func TestCanCreateRedirectErrToken(t *testing.T) {

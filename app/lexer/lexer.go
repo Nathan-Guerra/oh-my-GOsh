@@ -249,7 +249,7 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 		l.NextByte()
 		l.NextByte()
 		l.NextByte()
-		return Token{RedirectOutAppend, l.GetStringSlice(start, l.Position), nil}
+		return Token{RedirectErrAppend, l.GetStringSlice(start, l.Position), nil}
 	default: // Literal
 		for !l.IsEOL() &&
 			!l.ByteIs(' ') &&

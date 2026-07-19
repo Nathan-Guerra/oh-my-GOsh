@@ -26,6 +26,8 @@ func (k TokenKind) String() string {
 		return "REDIRECT_ERR"
 	case RedirectOutAppend:
 		return "REDIRECT_OUT_APPEND"
+	case RedirectErrAppend:
+		return "REDIRECT_ERR_APPEND"
 	default:
 		return strconv.Itoa(int(k))
 	}
