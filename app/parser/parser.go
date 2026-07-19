@@ -73,34 +73,12 @@ parsingLoop:
 				}
 			}
 		case lexer.RedirectOut:
-			var value strings.Builder
-		redirectOutLoop:
-			for _, subToken := range tokens[i+1:] {
-				switch subToken.Kind {
-				case lexer.Whitespace:
-					if len(value.String()) > 0 {
-						break redirectOutLoop
-					}
-
-					continue redirectOutLoop
-				case lexer.Expand:
-					if subToken.Value == "$" {
-						value.WriteString(strconv.Itoa(os.Getpid()))
-					} else {
-						value.WriteString(os.Getenv(subToken.Value))
-					}
-				case lexer.Literal, lexer.StringLiteral,
-					lexer.Numeric,
-					lexer.Escape:
-					value.WriteString(subToken.Value)
-				}
-			}
-
-			fi, err := os.Stat(value.String())
+			value := findFileName(tokens[i+1:])
+			fi, err := os.Stat(value)
 
 			if err != nil { // error, try to create file
 				fmt.Println(err)
-				newFile, err := os.Create(value.String())
+				newFile, err := os.Create(value)
 				if err != nil {
 					panic(err)
 				}
@@ -111,7 +89,7 @@ parsingLoop:
 					panic("==Error== Cannot write to a directory.")
 				}
 
-				file, err := os.OpenFile(value.String(), os.O_WRONLY|os.O_TRUNC, 0666)
+				file, err := os.OpenFile(value, os.O_WRONLY|os.O_TRUNC, 0666)
 				if err != nil {
 					panic(err)
 				}
@@ -120,33 +98,11 @@ parsingLoop:
 
 			break parsingLoop
 		case lexer.RedirectErr:
-			var value strings.Builder
-		redirectErrLoop:
-			for _, subToken := range tokens[i+1:] {
-				switch subToken.Kind {
-				case lexer.Whitespace:
-					if len(value.String()) > 0 {
-						break redirectErrLoop
-					}
-
-					continue redirectErrLoop
-				case lexer.Expand:
-					if subToken.Value == "$" {
-						value.WriteString(strconv.Itoa(os.Getpid()))
-					} else {
-						value.WriteString(os.Getenv(subToken.Value))
-					}
-				case lexer.Literal, lexer.StringLiteral,
-					lexer.Numeric,
-					lexer.Escape:
-					value.WriteString(subToken.Value)
-				}
-			}
-
-			fi, err := os.Stat(value.String())
+			value := findFileName(tokens[i+1:])
+			fi, err := os.Stat(value)
 
 			if err != nil { // error, try to create file
-				newFile, err := os.Create(value.String())
+				newFile, err := os.Create(value)
 				if err != nil {
 					panic(err)
 				}
@@ -157,7 +113,7 @@ parsingLoop:
 					panic("==Error== Cannot write to a directory.")
 				}
 
-				file, err := os.OpenFile(value.String(), os.O_WRONLY, 0666)
+				file, err := os.OpenFile(value, os.O_WRONLY, 0666)
 				if err != nil {
 					panic(err)
 				}
@@ -166,36 +122,12 @@ parsingLoop:
 
 			break parsingLoop
 		case lexer.RedirectOutAppend:
-			fmt.Println("appending")
-			var value strings.Builder
-		redirectOutAppendLoop:
-			for _, subToken := range tokens[i+1:] {
-				switch subToken.Kind {
-				case lexer.Whitespace:
-					if len(value.String()) > 0 {
-						break redirectOutAppendLoop
-					}
-
-					continue redirectOutAppendLoop
-				case lexer.Expand:
-					if subToken.Value == "$" {
-						value.WriteString(strconv.Itoa(os.Getpid()))
-					} else {
-						value.WriteString(os.Getenv(subToken.Value))
-					}
-				case lexer.Literal, lexer.StringLiteral,
-					lexer.Numeric,
-					lexer.Escape:
-					value.WriteString(subToken.Value)
-				}
-			}
-
-			fi, err := os.Stat(value.String())
+			value := findFileName(tokens[i+1:])
+			fi, err := os.Stat(value)
 
 			if err != nil { // error, try to create file
 				fmt.Println(err)
-
-				newFile, err := os.Create(value.String())
+				newFile, err := os.Create(value)
 				if err != nil {
 					panic(err)
 				}
@@ -206,7 +138,7 @@ parsingLoop:
 					panic("==Error== Cannot write to a directory.")
 				}
 
-				file, err := os.OpenFile(value.String(), os.O_WRONLY|os.O_APPEND, 0666)
+				file, err := os.OpenFile(value, os.O_WRONLY|os.O_APPEND, 0666)
 				if err != nil {
 					panic(err)
 				}
@@ -224,4 +156,31 @@ parsingLoop:
 	}
 
 	return cmd
+}
+
+func findFileName(tokens []lexer.Token) string {
+	var value strings.Builder
+loop:
+	for _, subToken := range tokens {
+		switch subToken.Kind {
+		case lexer.Whitespace:
+			if len(value.String()) > 0 {
+				break loop
+			}
+
+			continue loop
+		case lexer.Expand:
+			if subToken.Value == "$" {
+				value.WriteString(strconv.Itoa(os.Getpid()))
+			} else {
+				value.WriteString(os.Getenv(subToken.Value))
+			}
+		case lexer.Literal, lexer.StringLiteral,
+			lexer.Numeric,
+			lexer.Escape:
+			value.WriteString(subToken.Value)
+		}
+	}
+
+	return value.String()
 }
