@@ -43,6 +43,14 @@ func (l *Lexer) Peek() *byte {
 	return &p
 }
 
+func (l *Lexer) PeekMany(i int) string {
+	if l.Position+i >= len(l.Source) {
+		return ""
+	}
+
+	return l.Source[l.Position : l.Position+i]
+}
+
 func (l *Lexer) MatchTokenKind(r byte, lookup *byte) TokenKind {
 	switch {
 	case l.ByteIs(' '):
@@ -61,7 +69,14 @@ func (l *Lexer) MatchTokenKind(r byte, lookup *byte) TokenKind {
 		}
 		return RedirectOut
 	case l.IsNumeric(l.GetCurByte()):
-		if l.Peek() != nil && *l.Peek() == '>' {
+		if l.PeekMany(2) == ">>" {
+			switch {
+			case l.ByteIs('1'):
+				return RedirectOutAppend
+			case l.ByteIs('2'):
+				return RedirectErrAppend
+			}
+		} else if l.Peek() != nil && *l.Peek() == '>' {
 			switch {
 			case l.ByteIs('1'):
 				return RedirectOut
@@ -224,6 +239,14 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 		l.NextByte()
 		return Token{RedirectErr, l.GetStringSlice(start, l.Position), nil}
 	case RedirectOutAppend:
+		if l.ByteIs('1') {
+			l.NextByte()
+		}
+		l.NextByte()
+		l.NextByte()
+		return Token{RedirectOutAppend, l.GetStringSlice(start, l.Position), nil}
+	case RedirectErrAppend:
+		l.NextByte()
 		l.NextByte()
 		l.NextByte()
 		return Token{RedirectOutAppend, l.GetStringSlice(start, l.Position), nil}

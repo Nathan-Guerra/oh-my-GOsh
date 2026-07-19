@@ -144,6 +144,31 @@ parsingLoop:
 			}
 
 			break parsingLoop
+
+		case lexer.RedirectErrAppend:
+			value := findFileName(tokens[i+1:])
+			fi, err := os.Stat(value)
+
+			if err != nil { // error, try to create file
+				newFile, err := os.Create(value)
+				if err != nil {
+					panic(err)
+				}
+
+				cmd.Stderr = newFile
+			} else {
+				if fi.IsDir() {
+					panic("==Error== Cannot write to a directory.")
+				}
+
+				file, err := os.OpenFile(value, os.O_WRONLY|os.O_APPEND, 0666)
+				if err != nil {
+					panic(err)
+				}
+				cmd.Stderr = file
+			}
+
+			break parsingLoop
 		default:
 			panic(fmt.Sprintf("==Error== Token kind not identified {%s}.", token.Kind))
 		}

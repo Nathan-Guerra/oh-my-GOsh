@@ -43,4 +43,5 @@ const (
 	RedirectOut
 	RedirectErr
 	RedirectOutAppend
+	RedirectErrAppend
 )
