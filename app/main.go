@@ -6,13 +6,19 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/codecrafters-io/shell-starter-go/app/builtins"
 	"github.com/codecrafters-io/shell-starter-go/app/lexer"
 	"github.com/codecrafters-io/shell-starter-go/app/parser"
+	"github.com/codecrafters-io/shell-starter-go/app/readline"
 )
 
 func main() {
+	readline.Seed(time.Now().Nanosecond())
+	readline.Random()
+
+	return
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("$ ")
