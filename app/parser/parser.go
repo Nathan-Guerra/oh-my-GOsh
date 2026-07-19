@@ -77,7 +77,6 @@ parsingLoop:
 			fi, err := os.Stat(value)
 
 			if err != nil { // error, try to create file
-				fmt.Println(err)
 				newFile, err := os.Create(value)
 				if err != nil {
 					panic(err)
@@ -126,7 +125,6 @@ parsingLoop:
 			fi, err := os.Stat(value)
 
 			if err != nil { // error, try to create file
-				fmt.Println(err)
 				newFile, err := os.Create(value)
 				if err != nil {
 					panic(err)
