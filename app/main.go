@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 
@@ -30,7 +31,15 @@ func main() {
 	defer rl.Close()
 	for {
 		input, err := rl.Readline()
-		if err != nil {
+		if err == readline.ErrInterrupt {
+			if len(input) == 0 {
+				break
+			} else {
+				continue
+			}
+		} else if err == io.EOF {
+			break
+		} else if err != nil {
 			fmt.Println(err)
 			break
 		}
