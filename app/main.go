@@ -1,34 +1,38 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
-	"time"
 
+	"github.com/chzyer/readline"
 	"github.com/codecrafters-io/shell-starter-go/app/builtins"
 	"github.com/codecrafters-io/shell-starter-go/app/lexer"
 	"github.com/codecrafters-io/shell-starter-go/app/parser"
-	"github.com/codecrafters-io/shell-starter-go/app/readline"
 )
 
 func main() {
-	readline.Seed(time.Now().Nanosecond())
-	readline.Random()
+	var prefixCompleter readline.PrefixCompleter = *readline.NewPrefixCompleter(
+		readline.PcItem("echo"),
+		readline.PcItem("exit"),
+	)
 
-	return
-	scanner := bufio.NewScanner(os.Stdin)
+	var cfg readline.Config = readline.Config{
+		Prompt:       "$ ",
+		AutoComplete: &prefixCompleter,
+	}
+	rl, err := readline.NewEx(&cfg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "starting new term:", err)
+	}
+	defer rl.Close()
 	for {
-		fmt.Print("$ ")
-		scanner.Scan()
-		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "reading standard input:", err)
-			continue
+		input, err := rl.Readline()
+		if err != nil {
+			fmt.Println(err)
+			break
 		}
 
-		input := strings.TrimSpace(scanner.Text())
 		cmd := parser.CreateCommand(lexer.Tokenize(input))
 		if cmd.CommandName == "" {
 			continue
