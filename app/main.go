@@ -12,14 +12,16 @@ import (
 )
 
 func main() {
-	var prefixCompleter readline.PrefixCompleter = *readline.NewPrefixCompleter(
-		readline.PcItem("echo"),
-		readline.PcItem("exit"),
-	)
+	var completers []readline.PrefixCompleterInterface = make([]readline.PrefixCompleterInterface, 0)
+	for name := range builtins.Builtins {
+		completers = append(completers, readline.PcItem(name))
+	}
+
+	prefixCompleter := readline.NewPrefixCompleter(completers...)
 
 	var cfg readline.Config = readline.Config{
 		Prompt:       "$ ",
-		AutoComplete: &prefixCompleter,
+		AutoComplete: prefixCompleter,
 	}
 	rl, err := readline.NewEx(&cfg)
 	if err != nil {
