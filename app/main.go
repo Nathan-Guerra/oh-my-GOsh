@@ -15,7 +15,6 @@ import (
 
 func findCommand(search string) []string {
 	matches := make([]string, 0)
-
 	for name := range builtins.Builtins {
 		if strings.HasPrefix(name, search) {
 			matches = append(matches, name)
@@ -29,11 +28,13 @@ func findCommand(search string) []string {
 		for _, dir := range dirs {
 			entries, err := os.ReadDir(dir)
 			if err != nil {
-				// fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 				continue
 			}
 
 			for _, entry := range entries {
+				if len(matches) >= 10 {
+					break
+				}
 				info, err := entry.Info()
 				if err != nil {
 					panic(err)
@@ -50,20 +51,21 @@ func findCommand(search string) []string {
 		}
 	}
 
-	if len(matches) < 2 {
+	if len(matches) == 0 {
 		os.Stdout.Write([]byte{'\a'})
-		return make([]string, 0)
-
+	} else if len(matches) >= 2 {
+		if lastKey != '\t' {
+			os.Stdout.Write([]byte{'\a'})
+			return make([]string, 0)
+		}
+		// fmt.Fprintf(os.Stdout, "Display all %d possibilities? (y or n)", len(matches))
+		// scanner := bufio.NewScanner(os.Stdin)
+		// if scanner.Scan() {
+		// 	if scanner.Text() == "n" {
+		// 		return make([]string, 0)
+		// 	} else if
+		// }
 	}
-	// else if len(matches) >= 20 {
-	// 	fmt.Fprintf(os.Stdout, "Display all %d possibilities? (y or n)", len(matches))
-	// 	scanner := bufio.NewScanner(os.Stdin)
-	// 	if scanner.Scan() {
-	// 		if scanner.Text() == "n" {
-	// 			return make([]string, 0)
-	// 		} else if
-	// 	}
-	// }
 
 	return matches
 }
@@ -75,7 +77,22 @@ var cfg readline.Config = readline.Config{
 	AutoComplete: prefixCompleter,
 }
 
+var lastKey rune
+
+func keyListener(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
+	// the listener runs after the autocomplete callback, so the order is
+	// 1. User types (\t)
+	// 2. readline calls autocomplete (lastKey is the last char before TAB)
+	// 3. readline calls listener
+	// 4. user type \t again, the lastChar will be \t inside the autocomplete because of step 1
+
+	lastKey = key
+
+	return line, pos, true
+}
+
 func main() {
+	cfg.SetListener(keyListener)
 	rl, err := readline.NewEx(&cfg)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "starting new term:", err)
