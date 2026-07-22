@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"internal/bytealg"
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -66,6 +68,10 @@ func findCommand(search string) []string {
 		// 	} else if
 		// }
 	}
+
+	slices.SortFunc(matches, func(a, b string) int {
+		return bytealg.CompareString(a, b)
+	})
 
 	return matches
 }
