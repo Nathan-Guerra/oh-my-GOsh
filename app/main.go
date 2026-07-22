@@ -50,8 +50,10 @@ func findCommand(search string) []string {
 		}
 	}
 
-	if len(matches) == 0 {
+	if len(matches) < 2 {
 		os.Stdout.Write([]byte{'\a'})
+		return make([]string, 0)
+
 	}
 	// else if len(matches) >= 20 {
 	// 	fmt.Fprintf(os.Stdout, "Display all %d possibilities? (y or n)", len(matches))
