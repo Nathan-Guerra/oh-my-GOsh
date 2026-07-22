@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"internal/bytealg"
 	"io"
 	"os"
 	"os/exec"
@@ -70,7 +69,7 @@ func findCommand(search string) []string {
 	}
 
 	slices.SortFunc(matches, func(a, b string) int {
-		return bytealg.CompareString(a, b)
+		return strings.Compare(a, b)
 	})
 
 	return matches
