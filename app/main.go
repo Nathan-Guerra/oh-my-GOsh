@@ -22,9 +22,46 @@ func findCommand(search string) []string {
 		}
 	}
 
+	path := os.Getenv("PATH")
+	if len(path) > 0 {
+		dirs := strings.Split(path, string(os.PathListSeparator))
+
+		for _, dir := range dirs {
+			entries, err := os.ReadDir(dir)
+			if err != nil {
+				// fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+				continue
+			}
+
+			for _, entry := range entries {
+				info, err := entry.Info()
+				if err != nil {
+					panic(err)
+				}
+
+				if entry.Type().IsDir() || !strings.HasPrefix(entry.Name(), search) {
+					continue
+				}
+
+				if info.Mode()&0111 != 0 {
+					matches = append(matches, entry.Name())
+				}
+			}
+		}
+	}
+
 	if len(matches) == 0 {
 		os.Stdout.Write([]byte{'\a'})
 	}
+	// else if len(matches) >= 20 {
+	// 	fmt.Fprintf(os.Stdout, "Display all %d possibilities? (y or n)", len(matches))
+	// 	scanner := bufio.NewScanner(os.Stdin)
+	// 	if scanner.Scan() {
+	// 		if scanner.Text() == "n" {
+	// 			return make([]string, 0)
+	// 		} else if
+	// 	}
+	// }
 
 	return matches
 }
