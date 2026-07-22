@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/chzyer/readline"
 	"github.com/codecrafters-io/shell-starter-go/app/builtins"
@@ -12,18 +13,30 @@ import (
 	"github.com/codecrafters-io/shell-starter-go/app/parser"
 )
 
-func main() {
-	var completers []readline.PrefixCompleterInterface = make([]readline.PrefixCompleterInterface, 0)
+func findCommand(search string) []string {
+	matches := make([]string, 0)
+
 	for name := range builtins.Builtins {
-		completers = append(completers, readline.PcItem(name))
+		if strings.HasPrefix(name, search) {
+			matches = append(matches, name)
+		}
 	}
 
-	prefixCompleter := readline.NewPrefixCompleter(completers...)
-
-	var cfg readline.Config = readline.Config{
-		Prompt:       "$ ",
-		AutoComplete: prefixCompleter,
+	if len(matches) == 0 {
+		os.Stdout.Write([]byte{'\a'})
 	}
+
+	return matches
+}
+
+var commandList = readline.PcItemDynamic(findCommand)
+var prefixCompleter = readline.NewPrefixCompleter(commandList)
+var cfg readline.Config = readline.Config{
+	Prompt:       "$ ",
+	AutoComplete: prefixCompleter,
+}
+
+func main() {
 	rl, err := readline.NewEx(&cfg)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "starting new term:", err)
