@@ -2,6 +2,7 @@ package autocomplete
 
 import (
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -68,6 +69,10 @@ func (a *Autocompleter) Match(input string) []string {
 }
 
 func (a *Autocompleter) Retrieve() []string {
+	slices.SortFunc(a.options, func(a, b string) int {
+		return strings.Compare(a, b)
+	})
+
 	return a.options
 }
 
