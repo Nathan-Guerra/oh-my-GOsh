@@ -1,7 +1,6 @@
 package autocomplete
 
 import (
-	"fmt"
 	"os"
 	"strings"
 )
@@ -19,11 +18,11 @@ func (a *Autocompleter) SetBuiltins(s []string) {
 }
 
 func (a *Autocompleter) SetPATH(path string) {
-	fmt.Printf("\r\nset path with len: %d\r\n", len(path))
 	a.PATH = path
 }
 
 func (a *Autocompleter) EagerLoadPathCommands() {
+	hashMap := make(map[string]bool, 0)
 	dirs := strings.Split(a.PATH, string(os.PathListSeparator))
 	for _, dir := range dirs {
 		dirEntries, err := os.ReadDir(dir)
@@ -34,7 +33,12 @@ func (a *Autocompleter) EagerLoadPathCommands() {
 			if dirEntry.IsDir() {
 				continue
 			}
-			a.computedPATHExecutables = append(a.computedPATHExecutables, dirEntry.Name())
+
+			_, ok := hashMap[dirEntry.Name()]
+			if !ok {
+				a.computedPATHExecutables = append(a.computedPATHExecutables, dirEntry.Name())
+				hashMap[dirEntry.Name()] = true
+			}
 		}
 	}
 }

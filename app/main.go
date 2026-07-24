@@ -28,14 +28,16 @@ func main() {
 	var buffer strings.Builder
 termLoop:
 	for {
+		fmt.Print("$ ")
+
 		buffer.Reset()
 		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 		if err != nil {
 			panic(err)
 		}
+
 		defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-		fmt.Print("$ ")
 	lineLoop:
 		for {
 			input, err := reader.ReadByte()
@@ -67,6 +69,7 @@ termLoop:
 				fmt.Print("\r\n")
 				break lineLoop
 			case keyboard.CtrlC:
+				fmt.Print("\r\n")
 				buffer.Reset()
 				os.Stdin.Write([]byte{})
 				goto termLoop
@@ -90,6 +93,7 @@ termLoop:
 
 			lastKey = input
 		}
+		term.Restore(int(os.Stdin.Fd()), oldState)
 
 		cmd := parser.CreateCommand(lexer.Tokenize(string(buffer.String())))
 		if cmd.CommandName == "" {
@@ -117,7 +121,7 @@ termLoop:
 
 			externalCommand.Run()
 		} else {
-			fmt.Printf("%s: command not found\r\n", cmd.CommandName)
+			fmt.Printf("%s: command not found\n", cmd.CommandName)
 		}
 	}
 exit:

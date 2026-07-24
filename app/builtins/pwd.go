@@ -12,7 +12,7 @@ func (p *Pwd) Exec(args []string) *Response {
 		return &Response{}
 	}
 
-	return &Response{Out: wd + string('\n')}
+	return &Response{Out: wd + "\n"}
 }
 
 func init() {
