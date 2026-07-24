@@ -107,7 +107,9 @@ func main() {
 		if exists {
 			response := command.Exec(cmd.Arguments)
 			if len(response.Out) > 0 {
-				cmd.Stdout.Write([]byte(response.Out))
+				// cmd.Stdout.Write([]byte(response.Out))
+				n, err := cmd.Stdout.Write([]byte(response.Out))
+				fmt.Fprintf(os.Stderr, "WRITE: n=%d err=%v out=%q\n", n, err, response.Out)
 			}
 			if len(response.Err) > 0 {
 				cmd.Stderr.Write([]byte(response.Err))
