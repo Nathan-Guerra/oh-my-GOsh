@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"maps"
 	"os"
@@ -14,41 +13,41 @@ import (
 	"github.com/codecrafters-io/shell-starter-go/app/keyboard"
 	"github.com/codecrafters-io/shell-starter-go/app/lexer"
 	"github.com/codecrafters-io/shell-starter-go/app/parser"
-	"golang.org/x/term"
 )
 
 func buffer() string {
 	var lastKey byte
-	var buffer strings.Builder
+	var line []byte
+	buffer := make([]byte, 1)
 
 	autocompleter := autocomplete.GetCommandAutocompleter()
 	autocompleter.SetBuiltins(slices.Collect(maps.Keys(builtins.Builtins)))
 	autocompleter.SetPATH(os.Getenv("PATH"))
 	autocompleter.EagerLoad()
 
-	reader := bufio.NewReader(os.Stdin)
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	// reader := bufio.NewReader(os.Stdin)
+	// oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer term.Restore(int(os.Stdin.Fd()), oldState)
 
 loop:
 	for {
-		input, err := reader.ReadByte()
+		n, err := os.Stdin.Read(buffer)
 		if err != nil {
 			panic(err)
 		}
 
-		switch input {
-		case keyboard.Enter:
-			fmt.Print("\r\n")
+		switch buffer[0] {
+		case keyboard.EnterCR, keyboard.Enter:
+			fmt.Println("")
 			break loop
 		case keyboard.Tab:
 			old := autocompleter.Retrieve()
 			if len(old) >= 2 && lastKey == keyboard.Tab {
-				fmt.Printf("\r\n%s", strings.Join(old, "  "))
-				fmt.Printf("\r\n$ %s", buffer.String())
+				fmt.Printf("\n%s", strings.Join(old, "  "))
+				fmt.Printf("\n$ %s", buffer.String())
 				continue loop
 			} else {
 				matches := autocompleter.Match(buffer.String())
