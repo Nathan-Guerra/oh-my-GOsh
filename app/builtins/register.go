@@ -1,6 +1,15 @@
 package builtins
 
-type Builtin func(args []string) (string, error)
+type Response struct {
+	Out        string
+	Err        string
+	ShouldExit bool
+	ExitSignal int
+}
+
+type Builtin interface {
+	Exec(args []string) *Response
+}
 
 var Builtins = map[string]Builtin{}
 

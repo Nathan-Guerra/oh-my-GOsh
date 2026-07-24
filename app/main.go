@@ -1,136 +1,112 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"slices"
 	"strings"
 
-	"github.com/chzyer/readline"
+	"golang.org/x/term"
+
+	"github.com/codecrafters-io/shell-starter-go/app/autocomplete"
 	"github.com/codecrafters-io/shell-starter-go/app/builtins"
+	"github.com/codecrafters-io/shell-starter-go/app/keyboard"
 	"github.com/codecrafters-io/shell-starter-go/app/lexer"
 	"github.com/codecrafters-io/shell-starter-go/app/parser"
 )
 
-func findCommand(search string) []string {
-	matches := make([]string, 0)
-	for name := range builtins.Builtins {
-		if strings.HasPrefix(name, search) {
-			matches = append(matches, name)
-		}
-	}
-
-	path := os.Getenv("PATH")
-	if len(path) > 0 {
-		dirs := strings.Split(path, string(os.PathListSeparator))
-
-		for _, dir := range dirs {
-			entries, err := os.ReadDir(dir)
-			if err != nil {
-				continue
-			}
-
-			for _, entry := range entries {
-				if len(matches) >= 10 {
-					break
-				}
-				info, err := entry.Info()
-				if err != nil {
-					panic(err)
-				}
-
-				if entry.Type().IsDir() || !strings.HasPrefix(entry.Name(), search) {
-					continue
-				}
-
-				if info.Mode()&0111 != 0 {
-					matches = append(matches, entry.Name())
-				}
-			}
-		}
-	}
-
-	if len(matches) == 0 {
-		os.Stdout.Write([]byte{'\a'})
-	} else if len(matches) >= 2 {
-		if lastKey != '\t' {
-			os.Stdout.Write([]byte{'\a'})
-			return make([]string, 0)
-		}
-		// fmt.Fprintf(os.Stdout, "Display all %d possibilities? (y or n)", len(matches))
-		// scanner := bufio.NewScanner(os.Stdin)
-		// if scanner.Scan() {
-		// 	if scanner.Text() == "n" {
-		// 		return make([]string, 0)
-		// 	} else if
-		// }
-	}
-
-	slices.SortFunc(matches, func(a, b string) int {
-		return strings.Compare(a, b)
-	})
-
-	return matches
-}
-
-var commandList = readline.PcItemDynamic(findCommand)
-var prefixCompleter = readline.NewPrefixCompleter(commandList)
-var cfg readline.Config = readline.Config{
-	Prompt:       "$ ",
-	AutoComplete: prefixCompleter,
-}
-
-var lastKey rune
-
-func keyListener(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-	// the listener runs after the autocomplete callback, so the order is
-	// 1. User types (\t)
-	// 2. readline calls autocomplete (lastKey is the last char before TAB)
-	// 3. readline calls listener
-	// 4. user type \t again, the lastChar will be \t inside the autocomplete because of step 1
-
-	lastKey = key
-
-	return line, pos, true
-}
-
 func main() {
-	cfg.SetListener(keyListener)
-	rl, err := readline.NewEx(&cfg)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "starting new term:", err)
-	}
-	defer rl.Close()
+	var lastKey byte
+	var autocompleter autocomplete.Autocompleter
+	autocompleter.SetBuiltins(slices.Collect(maps.Keys(builtins.Builtins)))
+	autocompleter.SetPATH(os.Getenv("PATH"))
+	autocompleter.EagerLoadPathCommands()
+	reader := bufio.NewReader(os.Stdin)
+	var buffer strings.Builder
+termLoop:
 	for {
-		input, err := rl.Readline()
-		if err == readline.ErrInterrupt {
-			if len(input) == 0 {
-				break
-			} else {
-				continue
+		buffer.Reset()
+		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			panic(err)
+		}
+		defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+		fmt.Print("$ ")
+	lineLoop:
+		for {
+			input, err := reader.ReadByte()
+			if err != nil {
+				panic(err)
 			}
-		} else if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println(err)
-			break
+
+			switch input {
+			case keyboard.Tab:
+				old := autocompleter.Retrieve()
+
+				if len(old) >= 2 && lastKey == keyboard.Tab {
+					fmt.Printf("\r\n%s\r\n", strings.Join(old, "  "))
+					fmt.Printf("$ %s", buffer.String())
+					goto lineLoop
+				} else {
+					matches := autocompleter.Match(buffer.String())
+					if len(matches) == 1 {
+						size := len(buffer.String())
+						suffix := matches[0][size:] + " "
+						buffer.Write([]byte(suffix))
+						fmt.Print(suffix)
+					} else {
+						fmt.Printf("%c", keyboard.Bell)
+					}
+				}
+
+			case keyboard.Enter:
+				fmt.Print("\r\n")
+				break lineLoop
+			case keyboard.CtrlC:
+				buffer.Reset()
+				os.Stdin.Write([]byte{})
+				goto termLoop
+			case keyboard.Backspace:
+				if len(buffer.String()) > 0 {
+					v := buffer.String()
+					buffer.Reset()
+					buffer.WriteString(v[:len(v)-1])
+					// back one char, erase (prints " ")
+					// go back again (cursor is over the space char, looking like it deleted the content)
+					fmt.Print("\b \b")
+				}
+			default:
+				// printable characters
+				if input >= keyboard.Space && input <= keyboard.Tilde {
+					buffer.WriteByte(input)
+				}
+
+				fmt.Printf("%c", input)
+			}
+
+			lastKey = input
 		}
 
-		cmd := parser.CreateCommand(lexer.Tokenize(input))
+		cmd := parser.CreateCommand(lexer.Tokenize(string(buffer.String())))
 		if cmd.CommandName == "" {
 			continue
 		}
 
+		if cmd.CommandName == "exit" {
+			goto exit
+		}
 		command, exists := builtins.Builtins[cmd.CommandName]
 		if exists {
-			out, err := command(cmd.Arguments)
-			if len(out) > 0 {
-				cmd.Stdout.Write([]byte(out))
+			response := command.Exec(cmd.Arguments)
+			if len(response.Out) > 0 {
+				cmd.Stdout.Write([]byte(response.Out))
 			}
-			if err != nil {
-				cmd.Stderr.Write([]byte(err.Error()))
+			if len(response.Err) > 0 {
+				cmd.Stderr.Write([]byte(response.Err))
 
 			}
 		} else if _, err := exec.LookPath(cmd.CommandName); err == nil {
@@ -141,7 +117,8 @@ func main() {
 
 			externalCommand.Run()
 		} else {
-			fmt.Printf("%s: command not found\n", cmd.CommandName)
+			fmt.Printf("%s: command not found\r\n", cmd.CommandName)
 		}
 	}
+exit:
 }

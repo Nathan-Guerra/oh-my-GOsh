@@ -1,26 +1,24 @@
 package builtins
 
 import (
-	"os"
 	"strconv"
 )
 
-func exit(args []string) (out string, err error) {
-	if len(args) == 0 {
-		os.Exit(0)
-	} else {
-		code, e := strconv.Atoi(args[0])
-		if e != nil {
-			err = e
-			return
-		}
+type Exit struct{}
 
-		os.Exit(code)
+func (e *Exit) Exec(args []string) *Response {
+	if len(args) == 0 {
+		return &Response{ShouldExit: true, ExitSignal: 0}
 	}
-	os.Exit(0)
-	return
+
+	code, err := strconv.Atoi(args[0])
+	if err != nil {
+		return &Response{Err: err.Error()}
+	}
+
+	return &Response{ShouldExit: true, ExitSignal: code}
 }
 
 func init() {
-	Register("exit", exit)
+	Register("exit", &Exit{})
 }

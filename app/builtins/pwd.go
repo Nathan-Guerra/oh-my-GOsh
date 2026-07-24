@@ -4,16 +4,17 @@ import (
 	"os"
 )
 
-func pwd(args []string) (out string, err error) {
+type Pwd struct{}
+
+func (p *Pwd) Exec(args []string) *Response {
 	wd, err := os.Getwd()
 	if err != nil {
-		return
+		return &Response{}
 	}
 
-	out = wd + string('\n')
-	return
+	return &Response{Out: wd + string('\n')}
 }
 
 func init() {
-	Register("pwd", pwd)
+	Register("pwd", &Pwd{})
 }

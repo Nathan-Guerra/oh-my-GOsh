@@ -4,23 +4,14 @@ import (
 	"strings"
 )
 
-func echo(args []string) (out string, err error) {
-	var s strings.Builder
-	for i := 0; i < len(args); i++ {
-		if args[i] == "" {
-			continue
-		}
-		if i > 0 {
-			s.WriteRune(' ')
-		}
-		s.WriteString(args[i])
-	}
+type Echo struct{}
 
-	s.WriteByte('\n')
-	out = s.String()
-	return
+func (e *Echo) Exec(args []string) *Response {
+	out := strings.Join(args, " ") + "\n"
+
+	return &Response{Out: out}
 }
 
 func init() {
-	Register("echo", echo)
+	Register("echo", &Echo{})
 }
