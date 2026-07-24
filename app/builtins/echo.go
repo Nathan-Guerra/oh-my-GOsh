@@ -7,7 +7,7 @@ import (
 type Echo struct{}
 
 func (e *Echo) Exec(args []string) *Response {
-	out := strings.Join(args, " ") + "\n"
+	out := strings.Join(args, " ") + "\r\n"
 
 	return &Response{Out: out}
 }
