@@ -1,6 +1,7 @@
 package keyboard
 
 const (
+	Null      byte = 0
 	Tab       byte = '\t'
 	Enter     byte = '\n'
 	EnterCR   byte = '\r'

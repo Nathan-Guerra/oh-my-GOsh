@@ -30,6 +30,7 @@ func readByte() ([]byte, error) {
 var stdinFd int = int(os.Stdin.Fd())
 
 func readLine() []byte {
+	autocomplete.GetCommandAutocompleter().Clear()
 	old, err := term.MakeRaw(stdinFd)
 	if err != nil {
 		panic(err)
@@ -51,35 +52,44 @@ loop:
 			fmt.Println("\r")
 			break loop
 		case keyboard.Tab:
+			var matches []string
 			old := autocomplete.GetCommandAutocompleter().Retrieve()
-			if len(old) >= 2 && lastKey == keyboard.Tab {
-				fmt.Println("\r")
-				fmt.Println(strings.Join(old, "  "))
-				fmt.Printf("%s%s", prompt, string(line))
-				continue loop
+			if len(old) > 0 {
+				matches = old
 			} else {
-				matches := autocomplete.GetCommandAutocompleter().Match(string(line))
-				if len(matches) == 1 {
-					size := len(line)
-					suffix := matches[0][size:] + " "
-					line = append(line, suffix...)
-					fmt.Print(suffix)
-				} else {
+				matches = autocomplete.GetCommandAutocompleter().Match(string(line))
+			}
+
+			switch len(matches) {
+			case 0:
+				fmt.Printf("%c", keyboard.Bell)
+			case 1:
+				size := len(line)
+				suffix := matches[0][size:] + " "
+				line = append(line, suffix...)
+				fmt.Print(suffix)
+			default: // >= 2
+				largestPrefix := autocomplete.GetCommandAutocompleter().LargestCommonPrefix(string(line))
+				if len(largestPrefix) > 0 {
+					line = append(line, largestPrefix...)
+					fmt.Print(string(largestPrefix))
+					lastKey = keyboard.Null // erase last byte to prevent next iteration to always show the list of elements
+				} else if lastKey != keyboard.Tab {
 					fmt.Printf("%c", keyboard.Bell)
+				} else {
+					fmt.Println("\r")
+					fmt.Println(strings.Join(old, "  "))
+					fmt.Printf("%s%s", prompt, string(line))
 				}
 			}
 
-		// case keyboard.CtrlC:
-		// 	fmt.Printf("%c", input)
-		// 	fmt.Print("$ ")
-		// 	buffer.Reset()
-		// 	continue loop
 		case keyboard.Backspace:
 			if len(line) > 0 {
 				line = line[0 : len(line)-1]
 				// back one char, erase (prints " ")
 				// go back again (cursor is over the space char, looking like it deleted the content)
 				fmt.Print("\b \b")
+				autocomplete.GetCommandAutocompleter().Clear()
 			}
 		default:
 			// printable characters
@@ -87,6 +97,7 @@ loop:
 				line = append(line, buffer[0])
 				fmt.Printf("%c", buffer[0])
 			}
+			autocomplete.GetCommandAutocompleter().Clear()
 		}
 
 		lastKey = buffer[0]

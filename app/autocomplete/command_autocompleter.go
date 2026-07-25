@@ -22,7 +22,7 @@ func (a *CommandAutocompleter) SetPATH(path string) {
 	a.path = path
 }
 
-func (a *CommandAutocompleter) FindLargestPrefix(input string) []byte {
+func (a *CommandAutocompleter) LargestCommonPrefix(input string) []byte {
 	pos := len(input)
 	valid := true
 	prefix := make([]byte, 0)
