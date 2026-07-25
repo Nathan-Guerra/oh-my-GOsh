@@ -23,7 +23,15 @@ func (a *CommandAutocompleter) SetPATH(path string) {
 }
 
 func (a *CommandAutocompleter) LargestCommonPrefix(input string) []byte {
-	pos := len(input)
+	t := strings.Split(strings.TrimLeft(input, " "), " ")
+	var pos int
+	if len(t) == 1 { // search command
+		pos = len(input)
+	} else {
+		pos = len(t[len(t)-1])
+	}
+
+	// search files
 	valid := true
 	prefix := make([]byte, 0)
 	var target byte
@@ -88,17 +96,41 @@ func (a *CommandAutocompleter) GetLoadedCommands() map[string]string {
 	return a.loaded
 }
 
-func (a *CommandAutocompleter) Match(input string) []string {
+func (a *CommandAutocompleter) Match(input string) ([]string, int) {
+	t := strings.Split(strings.TrimLeft(input, " "), " ")
 	a.prefix = input
 	a.Clear()
 
-	for commandName := range a.loaded {
-		if strings.HasPrefix(commandName, a.prefix) {
-			a.options = append(a.options, commandName)
+	if len(t) == 1 { // search command
+		for commandName := range a.loaded {
+			if strings.HasPrefix(commandName, a.prefix) {
+				a.options = append(a.options, commandName)
+			}
+		}
+
+		return a.Retrieve(), len(a.prefix)
+	}
+
+	// search files
+	target := t[len(t)-1]
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return a.Retrieve(), 0
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return a.Retrieve(), 0
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() == false && strings.HasPrefix(entry.Name(), target) {
+			a.options = append(a.options, entry.Name())
 		}
 	}
 
-	return a.Retrieve()
+	return a.Retrieve(), len(target)
 }
 
 func (a *CommandAutocompleter) Retrieve() []string {
