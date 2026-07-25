@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseSimpleCommand(t *testing.T) {
-	tkns := lexer.Tokenize("echo foo")
+	tkns := lexer.Tokenize([]byte("echo foo"))
 	t.Logf("Output: %v", tkns)
 	cmd := CreateCommand(tkns)
 	t.Logf("Output: %v", cmd)
@@ -22,7 +22,7 @@ func TestParseSimpleCommand(t *testing.T) {
 }
 
 func TestParseCommandWithRedirectOut(t *testing.T) {
-	cmd := CreateCommand(lexer.Tokenize("echo foo > /dev/null"))
+	cmd := CreateCommand(lexer.Tokenize([]byte("echo foo > /dev/null")))
 
 	if cmd.CommandName != "echo" {
 		t.Errorf("Expected name 'echo', '%s' given.", cmd.CommandName)
@@ -43,7 +43,7 @@ func TestParseCommandWithRedirectOut(t *testing.T) {
 }
 
 func TestParseCommandWithDirAsRedirectOut(t *testing.T) {
-	cmd := CreateCommand(lexer.Tokenize("echo foo > ./$$"))
+	cmd := CreateCommand(lexer.Tokenize([]byte("echo foo > ./$$")))
 
 	if cmd.CommandName != "echo" {
 		t.Errorf("Expected name 'echo', '%s' given.", cmd.CommandName)
@@ -64,7 +64,7 @@ func TestParseCommandWithDirAsRedirectOut(t *testing.T) {
 }
 
 func TestParseCommandInDoubleQuotes(t *testing.T) {
-	cmd := CreateCommand(lexer.Tokenize("\"cat\" /foo/bar"))
+	cmd := CreateCommand(lexer.Tokenize([]byte("\"cat\" /foo/bar")))
 	if cmd.CommandName != "cat" {
 		t.Errorf("Expected name 'echo', '%s' received.", cmd.CommandName)
 	}
@@ -75,7 +75,7 @@ func TestParseCommandInDoubleQuotes(t *testing.T) {
 }
 
 func TestParseJoinedTokens(t *testing.T) {
-	cmd := CreateCommand(lexer.Tokenize("echo \"world\\\"insidequotes\"script\\\""))
+	cmd := CreateCommand(lexer.Tokenize([]byte("echo \"world\\\"insidequotes\"script\\\"")))
 	if cmd.CommandName != "echo" {
 		t.Errorf("Expected name 'echo', '%s' received.", cmd.CommandName)
 	}

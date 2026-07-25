@@ -5,7 +5,7 @@ import (
 )
 
 func TestCanCreateWhitespaceToken(t *testing.T) {
-	result := Tokenize("   ")
+	result := Tokenize([]byte("   "))
 	t.Logf("Output: %v", result)
 
 	assert_length_is(1, result, t)
@@ -14,7 +14,7 @@ func TestCanCreateWhitespaceToken(t *testing.T) {
 }
 
 func TestCanCreateLiteralToken(t *testing.T) {
-	result := Tokenize("echo")
+	result := Tokenize([]byte("echo"))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], Literal, t)
@@ -22,7 +22,7 @@ func TestCanCreateLiteralToken(t *testing.T) {
 }
 
 func TestCanCreateMultipleTokens(t *testing.T) {
-	result := Tokenize("echo foo!   bar ")
+	result := Tokenize([]byte("echo foo!   bar "))
 	t.Logf("Output: %v", result)
 
 	assert_length_is(6, result, t)
@@ -36,7 +36,7 @@ func TestCanCreateMultipleTokens(t *testing.T) {
 }
 
 func TestCanCreateEscapeToken(t *testing.T) {
-	result := Tokenize("\\a")
+	result := Tokenize([]byte("\\a"))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], Escape, t)
@@ -44,7 +44,7 @@ func TestCanCreateEscapeToken(t *testing.T) {
 }
 
 func TestCanCreateEscapeTokenInsideWord(t *testing.T) {
-	result := Tokenize("b\\ac")
+	result := Tokenize([]byte("b\\ac"))
 	t.Logf("Output: %v", result)
 	assert_length_is(3, result, t)
 	assert_token_kind_is(result[1], Escape, t)
@@ -52,28 +52,28 @@ func TestCanCreateEscapeTokenInsideWord(t *testing.T) {
 }
 
 func TestCanCreateExpandToken(t *testing.T) {
-	resultA := Tokenize("$USER")
+	resultA := Tokenize([]byte("$USER"))
 	assert_length_is(1, resultA, t)
 	assert_token_kind_is(resultA[0], Expand, t)
 	assert_token_value_is(resultA[0], "USER", t)
 
-	resultB := Tokenize("$USERtest")
+	resultB := Tokenize([]byte("$USERtest"))
 	assert_length_is(2, resultB, t)
 	assert_token_kind_is(resultB[0], Expand, t)
 	assert_token_value_is(resultB[0], "USER", t)
 
-	resultC := Tokenize("test$USER")
+	resultC := Tokenize([]byte("test$USER"))
 	assert_length_is(2, resultC, t)
 	assert_token_kind_is(resultC[1], Expand, t)
 	assert_token_value_is(resultC[1], "USER", t)
 
-	resultD := Tokenize("$$")
+	resultD := Tokenize([]byte("$$"))
 	t.Logf("Output: %v", resultD)
 	assert_length_is(1, resultD, t)
 	assert_token_kind_is(resultD[0], Expand, t)
 	assert_token_value_is(resultD[0], "$", t)
 
-	resultE := Tokenize("$FOO$BAR")
+	resultE := Tokenize([]byte("$FOO$BAR"))
 	t.Logf("Output: %v", resultE)
 	assert_length_is(2, resultE, t)
 	assert_token_kind_is(resultE[0], Expand, t)
@@ -83,7 +83,7 @@ func TestCanCreateExpandToken(t *testing.T) {
 }
 
 func TestCanIdentifyDollarSignAsLiteralOnStringEnds(t *testing.T) {
-	resultA := Tokenize("foo$")
+	resultA := Tokenize([]byte("foo$"))
 	t.Logf("Output: %v", resultA)
 	assert_length_is(2, resultA, t)
 	assert_token_kind_is(resultA[0], Literal, t)
@@ -91,7 +91,7 @@ func TestCanIdentifyDollarSignAsLiteralOnStringEnds(t *testing.T) {
 	assert_token_kind_is(resultA[1], Literal, t)
 	assert_token_value_is(resultA[1], "$", t)
 
-	resultB := Tokenize("foo$ bar")
+	resultB := Tokenize([]byte("foo$ bar"))
 	t.Logf("Output: %v", resultB)
 	assert_length_is(4, resultB, t)
 	assert_token_kind_is(resultB[0], Literal, t)
@@ -99,7 +99,7 @@ func TestCanIdentifyDollarSignAsLiteralOnStringEnds(t *testing.T) {
 	assert_token_kind_is(resultB[1], Literal, t)
 	assert_token_value_is(resultB[1], "$", t)
 
-	resultC := Tokenize("$")
+	resultC := Tokenize([]byte("$"))
 	t.Logf("Output: %v", resultC)
 	assert_length_is(1, resultC, t)
 	assert_token_kind_is(resultC[0], Literal, t)
@@ -107,17 +107,17 @@ func TestCanIdentifyDollarSignAsLiteralOnStringEnds(t *testing.T) {
 }
 
 func TestCanCreateNumericToken(t *testing.T) {
-	resultA := Tokenize("432")
+	resultA := Tokenize([]byte("432"))
 	t.Logf("Output: %v", resultA)
 	assert_token_kind_is(resultA[0], Numeric, t)
 	assert_token_value_is(resultA[0], "432", t)
 
-	resultB := Tokenize("432foo")
+	resultB := Tokenize([]byte("432foo"))
 	t.Logf("Output: %v", resultB)
 	assert_token_kind_is(resultB[0], Numeric, t)
 	assert_token_value_is(resultB[0], "432", t)
 
-	resultC := Tokenize("foo00bar")
+	resultC := Tokenize([]byte("foo00bar"))
 	t.Logf("Output: %v", resultC)
 	assert_length_is(1, resultC, t)
 	assert_token_kind_is(resultC[0], Literal, t)
@@ -125,7 +125,7 @@ func TestCanCreateNumericToken(t *testing.T) {
 }
 
 func TestCanCreateStringLiteralToken(t *testing.T) {
-	result := Tokenize("'foo $BAR  123'")
+	result := Tokenize([]byte("'foo $BAR  123'"))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], StringLiteral, t)
@@ -133,7 +133,7 @@ func TestCanCreateStringLiteralToken(t *testing.T) {
 }
 
 func TestCanCreateStringExpandToken(t *testing.T) {
-	result := Tokenize("\"foo $BAR  123\"")
+	result := Tokenize([]byte("\"foo $BAR  123\""))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], StringExpand, t)
@@ -141,7 +141,7 @@ func TestCanCreateStringExpandToken(t *testing.T) {
 }
 
 func TestCanCreateComplexStringExpandToken(t *testing.T) {
-	result := Tokenize("\"foo $BAR\\\"  123\"")
+	result := Tokenize([]byte("\"foo $BAR\\\"  123\""))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], StringExpand, t)
@@ -149,7 +149,7 @@ func TestCanCreateComplexStringExpandToken(t *testing.T) {
 }
 
 func TestStringExpandInnerTokenizer(t *testing.T) {
-	result := Tokenize("\"'foo' \\$BAR  123\"")
+	result := Tokenize([]byte("\"'foo' \\$BAR  123\""))
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], StringExpand, t)
 	assert_token_value_is(result[0], "'foo' \\$BAR  123", t)
@@ -175,19 +175,19 @@ func TestStringExpandInnerTokenizer(t *testing.T) {
 }
 
 func TestCanCreateRedirectOutToken(t *testing.T) {
-	resultA := Tokenize(">")
+	resultA := Tokenize([]byte(">"))
 	t.Logf("Output: %v", resultA)
 	assert_length_is(1, resultA, t)
 	assert_token_kind_is(resultA[0], RedirectOut, t)
 	assert_token_value_is(resultA[0], ">", t)
 
-	resultB := Tokenize("1>")
+	resultB := Tokenize([]byte("1>"))
 	t.Logf("Output: %v", resultB)
 	assert_length_is(1, resultB, t)
 	assert_token_kind_is(resultB[0], RedirectOut, t)
 	assert_token_value_is(resultB[0], "1>", t)
 
-	resultC := Tokenize("1 >")
+	resultC := Tokenize([]byte("1 >"))
 	t.Logf("Output: %v", resultC)
 	assert_length_is(3, resultC, t)
 	assert_token_kind_is(resultC[0], Numeric, t)
@@ -196,12 +196,12 @@ func TestCanCreateRedirectOutToken(t *testing.T) {
 }
 
 func TestCanCreateRedirectOutAppendToken(t *testing.T) {
-	result := Tokenize(">>")
+	result := Tokenize([]byte(">>"))
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], RedirectOutAppend, t)
 	assert_token_value_is(result[0], ">>", t)
 
-	resultB := Tokenize("1>>")
+	resultB := Tokenize([]byte("1>>"))
 	assert_length_is(1, resultB, t)
 	assert_token_kind_is(resultB[0], RedirectOutAppend, t)
 	assert_token_value_is(resultB[0], "1>>", t)
@@ -209,20 +209,20 @@ func TestCanCreateRedirectOutAppendToken(t *testing.T) {
 }
 
 func TestCanCreateRedirecErrAppendToken(t *testing.T) {
-	result := Tokenize("2>>")
+	result := Tokenize([]byte("2>>"))
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], RedirectErrAppend, t)
 	assert_token_value_is(result[0], "2>>", t)
 }
 
 func TestCanCreateRedirectErrToken(t *testing.T) {
-	result := Tokenize("2>")
+	result := Tokenize([]byte("2>"))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], RedirectErr, t)
 	assert_token_value_is(result[0], "2>", t)
 
-	resultB := Tokenize("2 >")
+	resultB := Tokenize([]byte("2 >"))
 	t.Logf("Output: %v", resultB)
 	assert_length_is(3, resultB, t)
 	assert_token_kind_is(resultB[0], Numeric, t)
@@ -231,7 +231,7 @@ func TestCanCreateRedirectErrToken(t *testing.T) {
 }
 
 func TestCanTokenizeComplexInput(t *testing.T) {
-	result := Tokenize("echo \"foo   bar\"qux 1000 1>/path/to/file.txt")
+	result := Tokenize([]byte("echo \"foo   bar\"qux 1000 1>/path/to/file.txt"))
 	// t.Logf("Output: %v", result)
 	assert_length_is(9, result, t)
 	assert_token_kind_is(result[0], Literal, t)
@@ -244,7 +244,7 @@ func TestCanTokenizeComplexInput(t *testing.T) {
 	assert_token_kind_is(result[7], RedirectOut, t)
 	assert_token_kind_is(result[8], Literal, t)
 
-	resultB := Tokenize("cat /tmp/pig/\"number 96\" /tmp/pig/\"doublequote \\\" 68\" /tmp/pig/\"backslash \\\\ 19\"")
+	resultB := Tokenize([]byte("cat /tmp/pig/\"number 96\" /tmp/pig/\"doublequote \\\" 68\" /tmp/pig/\"backslash \\\\ 19\""))
 	t.Logf("Output: %v", resultB)
 	assert_length_is(10, resultB, t)
 	assert_token_kind_is(resultB[0], Literal, t)

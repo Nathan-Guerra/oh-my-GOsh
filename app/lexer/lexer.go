@@ -1,7 +1,7 @@
 package lexer
 
 type Lexer struct {
-	Source   string
+	Source   []byte
 	Position int
 }
 
@@ -22,7 +22,7 @@ func (l *Lexer) ByteIs(b byte) bool {
 }
 
 func (l *Lexer) GetStringSlice(start, end int) string {
-	return l.Source[start:end]
+	return string(l.Source[max(start, 0):min(end, len(l.Source))])
 }
 
 func (l *Lexer) GetCurByte() byte {
@@ -48,7 +48,7 @@ func (l *Lexer) PeekMany(i int) string {
 		return ""
 	}
 
-	return l.Source[l.Position+1 : l.Position+1+i]
+	return l.GetStringSlice(l.Position+1, l.Position+1+i)
 }
 
 func (l *Lexer) MatchTokenKind(r byte, lookup *byte) TokenKind {
@@ -264,7 +264,7 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 	}
 }
 
-func Tokenize(input string) []Token {
+func Tokenize(input []byte) []Token {
 	lexer := Lexer{input, 0}
 	tokens := make([]Token, 0)
 	for !lexer.IsEOL() {
