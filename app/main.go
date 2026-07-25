@@ -16,36 +16,49 @@ import (
 	"golang.org/x/term"
 )
 
+var prompt string = "\r$ "
+
+func readByte() ([]byte, error) {
+	buffer := make([]byte, 1)
+	n, err := os.Stdin.Read(buffer)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read byte: %s", err.Error())
+	}
+	return buffer[:n], nil
+}
+
+var stdinFd int = int(os.Stdin.Fd())
+
 func readLine() []byte {
+	old, err := term.MakeRaw(stdinFd)
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(stdinFd, old)
+
 	var lastKey byte
 	var line []byte
-	buffer := make([]byte, 1)
 
-	autocompleter := autocomplete.GetCommandAutocompleter()
-	autocompleter.SetBuiltins(slices.Collect(maps.Keys(builtins.Builtins)))
-	autocompleter.SetPATH(os.Getenv("PATH"))
-	autocompleter.EagerLoad()
 loop:
 	for {
-		fmt.Println("reading start")
-		_, err := os.Stdin.Read(buffer)
-		fmt.Println("reading end")
+		buffer, err := readByte()
 		if err != nil {
 			panic(err)
 		}
 
 		switch buffer[0] {
 		case keyboard.EnterCR, keyboard.Enter:
-			fmt.Println()
+			fmt.Println("\r")
 			break loop
 		case keyboard.Tab:
-			old := autocompleter.Retrieve()
+			old := autocomplete.GetCommandAutocompleter().Retrieve()
 			if len(old) >= 2 && lastKey == keyboard.Tab {
-				fmt.Printf("\n%s", strings.Join(old, "  "))
-				fmt.Printf("\n$ %s", string(line))
+				fmt.Println("\r")
+				fmt.Println(strings.Join(old, "  "))
+				fmt.Printf("%s%s", prompt, string(line))
 				continue loop
 			} else {
-				matches := autocompleter.Match(string(line))
+				matches := autocomplete.GetCommandAutocompleter().Match(string(line))
 				if len(matches) == 1 {
 					size := len(line)
 					suffix := matches[0][size:] + " "
@@ -83,15 +96,15 @@ loop:
 }
 
 func REPL() int {
+	autocompleter := autocomplete.GetCommandAutocompleter()
+	autocompleter.SetBuiltins(slices.Collect(maps.Keys(builtins.Builtins)))
+	autocompleter.SetPATH(os.Getenv("PATH"))
+	autocompleter.EagerLoad()
+
 	var code int
-	old, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), old)
 
 	for {
-		fmt.Print("$ ")
+		fmt.Print(prompt)
 		buffer := readLine()
 
 		cmd := parser.CreateCommand(lexer.Tokenize(buffer))
@@ -103,9 +116,7 @@ func REPL() int {
 		if exists {
 			response := command.Exec(cmd.Arguments)
 			if len(response.Out) > 0 {
-				// cmd.Stdout.Write([]byte(response.Out))
-				n, err := cmd.Stdout.Write([]byte(response.Out))
-				fmt.Fprintf(os.Stderr, "WRITE: n=%d err=%v out=%q\n", n, err, response.Out)
+				cmd.Stdout.Write([]byte(response.Out))
 			}
 			if len(response.Err) > 0 {
 				cmd.Stderr.Write([]byte(response.Err))
@@ -124,7 +135,7 @@ func REPL() int {
 
 			externalCommand.Run()
 		} else {
-			fmt.Printf("%s: command not found\n", cmd.CommandName)
+			fmt.Println(cmd.CommandName + ": command not found")
 		}
 	}
 

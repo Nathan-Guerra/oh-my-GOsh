@@ -43,8 +43,13 @@ func (a *CommandAutocompleter) EagerLoad() {
 				continue
 			}
 
+			info, err := dirEntry.Info()
+			if err != nil {
+				continue
+			}
+
 			_, ok := commandMap[dirEntry.Name()]
-			if !ok {
+			if info.Mode().Perm()&0111 != 0 && !ok {
 				commandMap[dirEntry.Name()] = dir + "/" + dirEntry.Name()
 			}
 		}
