@@ -23,18 +23,29 @@ func (a *CommandAutocompleter) SetPATH(path string) {
 }
 
 func (a *CommandAutocompleter) FindLargestPrefix(input string) []byte {
-	target := input[len(input)-1]
-
+	pos := len(input)
 	valid := true
+	prefix := make([]byte, 0)
+	var target byte
 	for valid {
-		for _, name := range a.options {
-			// todo: validate name at input+prefix
-			// 		 increment until input+prefix != target
-			//		 return input+prefix
-
+		if pos >= len(a.options[0]) {
+			break
 		}
-
+		target = a.options[0][pos:][0]
+		for _, name := range a.options {
+			if pos >= len(name) || name[pos] != target {
+				valid = false
+				break
+			}
+		}
+		if !valid {
+			break
+		}
+		prefix = append(prefix, target)
+		pos++
 	}
+
+	return prefix
 }
 
 func (a *CommandAutocompleter) EagerLoad() {
