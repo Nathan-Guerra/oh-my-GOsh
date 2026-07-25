@@ -22,6 +22,21 @@ func (a *CommandAutocompleter) SetPATH(path string) {
 	a.path = path
 }
 
+func (a *CommandAutocompleter) FindLargestPrefix(input string) []byte {
+	target := input[len(input)-1]
+
+	valid := true
+	for valid {
+		for _, name := range a.options {
+			// todo: validate name at input+prefix
+			// 		 increment until input+prefix != target
+			//		 return input+prefix
+
+		}
+
+	}
+}
+
 func (a *CommandAutocompleter) EagerLoad() {
 	commandMap := make(map[string]string, 0)
 
