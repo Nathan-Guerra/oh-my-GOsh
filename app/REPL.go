@@ -8,6 +8,8 @@ import (
 
 	"github.com/codecrafters-io/shell-starter-go/app/autocomplete"
 	"github.com/codecrafters-io/shell-starter-go/app/keyboard"
+	"github.com/codecrafters-io/shell-starter-go/app/lexer"
+	"github.com/domonda/go-pretty"
 	"golang.org/x/term"
 )
 
@@ -102,6 +104,14 @@ loop:
 		}
 
 		lastKey = buffer[0]
+
+		writter, err := os.OpenFile("logs/debug.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+		if err != nil {
+			fmt.Println("cannot debug")
+		} else {
+			lexer := lexer.Tokenize(line)
+			pretty.Fprint(writter, lexer, "    ")
+		}
 	}
 
 	return line
