@@ -28,6 +28,10 @@ func (k TokenKind) String() string {
 		return "REDIRECT_OUT_APPEND"
 	case RedirectErrAppend:
 		return "REDIRECT_ERR_APPEND"
+	case ParsingStringLiteral:
+		return "PARSING_STRING_LITERAL"
+	case ParsingStringExpand:
+		return "PARSING_STRING_EXPAND"
 	default:
 		return strconv.Itoa(int(k))
 	}
@@ -46,4 +50,7 @@ const (
 	RedirectErr
 	RedirectOutAppend
 	RedirectErrAppend
+
+	ParsingStringLiteral
+	ParsingStringExpand
 )

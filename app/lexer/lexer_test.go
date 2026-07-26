@@ -124,12 +124,32 @@ func TestCanCreateNumericToken(t *testing.T) {
 
 }
 
+func TestCanCreateParsingStringLiterak(t *testing.T) {
+	result := Tokenize([]byte("'in the middle of''"))
+	t.Logf("Output: %v", result)
+	assert_length_is(2, result, t)
+	assert_token_kind_is(result[0], StringLiteral, t)
+	assert_token_value_is(result[0], "in the middle of", t)
+	assert_token_kind_is(result[1], ParsingStringLiteral, t)
+	assert_token_value_is(result[1], "'", t)
+}
 func TestCanCreateStringLiteralToken(t *testing.T) {
 	result := Tokenize([]byte("'foo $BAR  123'"))
 	t.Logf("Output: %v", result)
 	assert_length_is(1, result, t)
 	assert_token_kind_is(result[0], StringLiteral, t)
 	assert_token_value_is(result[0], "foo $BAR  123", t)
+}
+
+func TestCanCreateParsingStringExpandToken(t *testing.T) {
+	result := Tokenize([]byte("\"foo $BAR  123\"\""))
+	t.Logf("Output: %v", result)
+	assert_length_is(2, result, t)
+	assert_token_kind_is(result[0], StringExpand, t)
+	assert_token_value_is(result[0], "foo $BAR  123", t)
+
+	assert_token_kind_is(result[1], ParsingStringExpand, t)
+	assert_token_value_is(result[1], "\"", t)
 }
 
 func TestCanCreateStringExpandToken(t *testing.T) {

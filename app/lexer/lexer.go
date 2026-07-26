@@ -105,29 +105,34 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 		}
 		return Token{Numeric, l.GetStringSlice(start, l.Position), nil}
 	case StringLiteral:
+		var valid bool
+		l.NextByte()
 		for !l.IsEOL() {
-			l.NextByte()
-			if !l.IsEOL() && l.ByteIs('\'') {
+			if l.ByteIs('\'') {
+				valid = true
 				l.NextByte()
 				break
 			}
+			l.NextByte()
+		}
+
+		if !valid {
+			return Token{ParsingStringLiteral, l.GetStringSlice(start, l.Position), nil}
 		}
 		// skip opening and closing (')
 		return Token{StringLiteral, l.GetStringSlice(start+1, l.Position-1), nil}
 	case StringExpand:
+		var valid bool
 		l.NextByte()
 		innerTokens := make([]Token, 0)
 
 	innerLoop:
 		for !l.IsEOL() {
-			if l.IsEOL() {
-				panic("==Error== Unmatched double quotes!")
-			}
-
 			inner_kind := l.MatchTokenKind(l.GetCurByte(), l.Peek())
 
 			switch inner_kind {
 			case StringExpand:
+				valid = true
 				l.NextByte()
 				break innerLoop
 			case Whitespace:
@@ -195,6 +200,10 @@ func (l *Lexer) CreateToken(k TokenKind) Token {
 
 				innerTokens = append(innerTokens, Token{Literal, l.GetStringSlice(innerStart, l.Position), nil})
 			}
+		}
+
+		if !valid {
+			return Token{ParsingStringExpand, l.GetStringSlice(start, l.Position), &innerTokens}
 		}
 
 		innerString := l.GetStringSlice(start+1, l.Position-1)
