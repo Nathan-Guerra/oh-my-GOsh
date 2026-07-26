@@ -61,11 +61,11 @@ loop:
 				fmt.Printf("%c", keyboard.Bell)
 			case 1:
 				line = slices.Delete(line, len(line)-replacements, len(line))
-				line = append(line, (matches[0] + " ")...)
+				line = append(line, matches[0]...)
 				for i := 0; i < replacements; i++ {
 					fmt.Print("\b")
 				}
-				fmt.Print(matches[0] + " ")
+				fmt.Print(matches[0])
 
 				autocomplete.GetCommandAutocompleter().Clear()
 				oldMatches = make([]string, 0)
@@ -80,7 +80,7 @@ loop:
 					fmt.Printf("%c", keyboard.Bell)
 				} else {
 					fmt.Println("\r")
-					fmt.Println(strings.Join(oldMatches, "  "))
+					fmt.Println(strings.Join(oldMatches, " "))
 					fmt.Printf("%s%s", Prompt, string(line))
 				}
 			}
